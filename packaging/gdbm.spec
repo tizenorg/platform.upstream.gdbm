@@ -70,10 +70,10 @@ to develop applications that require these.
 %setup -q
 
 %build
-aclocal
-autoreconf --force --install
+#aclocal
+#autoreconf --force --install
 export CFLAGS="%{optflags} -Wa,--noexecstack"
-%configure --enable-libgdbm-compat
+%configure --enable-libgdbm-compat --disable-nls
 make %{?_smp_mflags};
 
 %install
@@ -87,14 +87,11 @@ echo "/* GNU ld script
    the static library, so try that secondarily.  */
 GROUP ( %{_libdir}/libgdbm.a %{_libdir}/libgdbm_compat.a )" > %{buildroot}/%{_libdir}/libndbm.a
 
-mkdir -p %{buildroot}%{_datadir}/locale/zh_CN/LC_MESSAGES/
-cp -r %{SOURCE3} %{buildroot}%{_datadir}/locale/zh_CN/LC_MESSAGES/%{name}.mo
-%find_lang %{name}
-
 %post -n %lname -p /sbin/ldconfig
 
 %postun -n %lname -p /sbin/ldconfig
 
+%files -n  %lname
 %defattr(-,root,root)
 %doc COPYING
 %{_libdir}/libgdbm.so.4
