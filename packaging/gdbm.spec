@@ -1,38 +1,17 @@
-#
-# spec file for package gdbm
-#
-# Copyright (c) 2012 SUSE LINUX Products GmbH, Nuernberg, Germany.
-#
-# All modifications and additions to the file contributed by third parties
-# remain the property of their copyright owners, unless otherwise agreed
-# upon. The license for this file, and modifications and additions to the
-# file, is the same license as for the pristine package itself (unless the
-# license for the pristine package is not an Open Source License, in which
-# case the license is the MIT License). An "Open Source License" is a
-# license that conforms to the Open Source Definition (Version 1.9)
-# published by the Open Source Initiative.
-
-# Please submit bugfixes or comments via http://bugs.opensuse.org/
-#
-
+%define keepstatic 1
 
 Name:           gdbm
-Version:        1.8.3
+%define lname	libgdbm
+Url:            http://directory.fsf.org/GNU/gdbm.html
+Version:        1.10
 Release:        0
 License:        GPL-2.0+
 Summary:        GNU dbm key/data database
-%define lname	libgdbm
-Url:            http://directory.fsf.org/GNU/gdbm.html
 Group:          System/Libraries
-Source:         %{name}-%{version}.tar.bz2
+Source:         ftp://prep.ai.mit.edu/gnu/gdbm/gdbm-%{version}.tar.gz
 Source2:        baselibs.conf
-Patch0:         gdbm-%{version}.dif
-Patch1:         gdbm-protoize_dbm_headers.patch
-Patch2:         gdbm-prototype_static_functions.patch
-Patch3:         gdbm-fix_testprogs.patch
-Patch4:         gdbm-1.8.3-no-build-date.patch
+# FIX-FOR-UPSTREAM i@marguerite.su - remove the build date from src/version.c
 BuildRequires:  libtool
-BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 
 %description
 GNU dbm is a library of database functions that use extensible
@@ -89,25 +68,16 @@ to develop applications that require these.
 
 %prep
 %setup -q
-%patch0
-%patch1
-%patch2
-%patch3
-%patch4
 
 %build
 aclocal
 autoreconf --force --install
-%ifarch sparc64
-export CC="gcc -m64"
-%endif
 export CFLAGS="%{optflags} -Wa,--noexecstack"
-%configure
+%configure --enable-libgdbm-compat
 make %{?_smp_mflags};
 
 %install
-make install INSTALL_ROOT=%{buildroot}
-make install-compat INSTALL_ROOT=%{buildroot}
+%make_install
 echo "/* GNU ld script
    Use the shared library, but some functions are only in
    the static library, so try that secondarily.  */
@@ -117,20 +87,24 @@ echo "/* GNU ld script
    the static library, so try that secondarily.  */
 GROUP ( %{_libdir}/libgdbm.a %{_libdir}/libgdbm_compat.a )" > %{buildroot}/%{_libdir}/libndbm.a
 
+mkdir -p %{buildroot}%{_datadir}/locale/zh_CN/LC_MESSAGES/
+cp -r %{SOURCE3} %{buildroot}%{_datadir}/locale/zh_CN/LC_MESSAGES/%{name}.mo
+%find_lang %{name}
+
 %post -n %lname -p /sbin/ldconfig
 
 %postun -n %lname -p /sbin/ldconfig
 
-%files -n %lname
 %defattr(-,root,root)
-%doc COPYING README NEWS
-%{_libdir}/libgdbm.so.3
-%{_libdir}/libgdbm.so.3.0.0
-%{_libdir}/libgdbm_compat.so.3
-%{_libdir}/libgdbm_compat.so.3.0.0
+%doc COPYING
+%{_libdir}/libgdbm.so.4
+%{_libdir}/libgdbm.so.4.0.0
+%{_libdir}/libgdbm_compat.so.4
+%{_libdir}/libgdbm_compat.so.4.0.0
 
 %files devel
 %defattr(-,root,root)
+%{_bindir}/testgdbm
 %{_includedir}/dbm.h
 %{_includedir}/gdbm.h
 %{_includedir}/ndbm.h
@@ -142,7 +116,4 @@ GROUP ( %{_libdir}/libgdbm.a %{_libdir}/libgdbm_compat.a )" > %{buildroot}/%{_li
 %{_libdir}/libndbm.a
 %{_libdir}/libndbm.so
 %{_mandir}/man3/gdbm.3.gz
-%exclude %{_libdir}/*.la
 
-
-%changelog
