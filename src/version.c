@@ -24,11 +24,8 @@
    The DIST_DATE magic below is replaced by the actual date when
    making the distdir. */
 const char * gdbm_version = "GDBM version " PACKAGE_VERSION ". "
-"25/12/2013"
-#if defined(__STDC__) && defined(__DATE__) && defined(__TIME__)
-		" (built " __DATE__ " " __TIME__ ")"
-#endif
-;
+"13/11/2011";
+
 int const gdbm_version_number[3] = {
   GDBM_VERSION_MAJOR,
   GDBM_VERSION_MINOR,
