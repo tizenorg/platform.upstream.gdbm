@@ -10,7 +10,6 @@ Summary:        GNU dbm key/data database
 Group:          System/Libraries
 Source:         ftp://prep.ai.mit.edu/gnu/gdbm/gdbm-%{version}.tar.gz
 Source2:        baselibs.conf
-# FIX-FOR-UPSTREAM i@marguerite.su - remove the build date from src/version.c
 BuildRequires:  libtool
 
 %description
@@ -34,7 +33,6 @@ package also provides traditional dbm and ndbm interfaces.
 License:        GPL-2.0+
 Summary:        GNU dbm key/data database
 Group:          System/Libraries
-# O/P added in 12.2
 Obsoletes:      gdbm < %{version}-%{release}
 Provides:       gdbm = %{version}-%{release}
 
@@ -70,8 +68,6 @@ to develop applications that require these.
 %setup -q
 
 %build
-#aclocal
-#autoreconf --force --install
 export CFLAGS="%{optflags} -Wa,--noexecstack"
 %configure --enable-libgdbm-compat --disable-nls
 make %{?_smp_mflags};
