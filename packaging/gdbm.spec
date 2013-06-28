@@ -10,6 +10,7 @@ Summary:        GNU dbm key/data database
 Group:          System/Libraries
 Source:         ftp://prep.ai.mit.edu/gnu/gdbm/gdbm-%{version}.tar.gz
 Source2:        baselibs.conf
+Source1001: 	gdbm.manifest
 BuildRequires:  libtool
 
 %description
@@ -66,6 +67,7 @@ to develop applications that require these.
 
 %prep
 %setup -q
+cp %{SOURCE1001} .
 
 %build
 export CFLAGS="%{optflags} -Wa,--noexecstack"
@@ -88,6 +90,7 @@ GROUP ( %{_libdir}/libgdbm.a %{_libdir}/libgdbm_compat.a )" > %{buildroot}/%{_li
 %postun -n %lname -p /sbin/ldconfig
 
 %files -n  %lname
+%manifest %{name}.manifest
 %defattr(-,root,root)
 %doc COPYING
 %{_libdir}/libgdbm.so.4
@@ -96,6 +99,7 @@ GROUP ( %{_libdir}/libgdbm.a %{_libdir}/libgdbm_compat.a )" > %{buildroot}/%{_li
 %{_libdir}/libgdbm_compat.so.4.0.0
 
 %files devel
+%manifest %{name}.manifest
 %defattr(-,root,root)
 %{_bindir}/testgdbm
 %{_includedir}/dbm.h
