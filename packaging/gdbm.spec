@@ -1,16 +1,16 @@
 %define keepstatic 1
 
 Name:           gdbm
-%define lname	libgdbm
+%define lname   libgdbm
 Url:            http://directory.fsf.org/GNU/gdbm.html
-Version:        1.10
+Version:        1.11
 Release:        0
 License:        GPL-2.0+
 Summary:        GNU dbm key/data database
 Group:          System/Libraries
 Source:         ftp://prep.ai.mit.edu/gnu/gdbm/gdbm-%{version}.tar.gz
 Source2:        baselibs.conf
-Source1001: 	gdbm.manifest
+Source1001:     gdbm.manifest
 BuildRequires:  libtool
 
 %description
@@ -55,9 +55,9 @@ For compatibility with programs using old UNIX dbm functions, the
 package also provides traditional dbm and ndbm interfaces.
 
 %package devel
-License:        GPL-2.0+ ; LGPL-2.1+
+License:        GPL-2.0+ and LGPL-2.1+
 Summary:        Include Files and Libraries mandatory for Development
-Group:          Development/Libraries/C and C++
+Group:          System/Libraries
 Requires:       gdbm = %{version}
 Provides:       gdbm:/usr/lib/libgdbm.so
 
@@ -72,7 +72,7 @@ cp %{SOURCE1001} .
 %build
 export CFLAGS="%{optflags} -Wa,--noexecstack"
 %configure --enable-libgdbm-compat --disable-nls
-make %{?_smp_mflags};
+%__make %{?_smp_mflags};
 
 %install
 %make_install
@@ -92,7 +92,10 @@ GROUP ( %{_libdir}/libgdbm.a %{_libdir}/libgdbm_compat.a )" > %{buildroot}/%{_li
 %files -n  %lname
 %manifest %{name}.manifest
 %defattr(-,root,root)
-%doc COPYING
+%license COPYING
+%{_bindir}/gdbm_dump
+%{_bindir}/gdbm_load
+%{_bindir}/gdbmtool
 %{_libdir}/libgdbm.so.4
 %{_libdir}/libgdbm.so.4.0.0
 %{_libdir}/libgdbm_compat.so.4
@@ -101,7 +104,6 @@ GROUP ( %{_libdir}/libgdbm.a %{_libdir}/libgdbm_compat.a )" > %{buildroot}/%{_li
 %files devel
 %manifest %{name}.manifest
 %defattr(-,root,root)
-%{_bindir}/testgdbm
 %{_includedir}/dbm.h
 %{_includedir}/gdbm.h
 %{_includedir}/ndbm.h
@@ -113,4 +115,6 @@ GROUP ( %{_libdir}/libgdbm.a %{_libdir}/libgdbm_compat.a )" > %{buildroot}/%{_li
 %{_libdir}/libndbm.a
 %{_libdir}/libndbm.so
 %{_mandir}/man3/gdbm.3.gz
-
+%{_mandir}/man1/gdbm_dump.1.gz
+%{_mandir}/man1/gdbm_load.1.gz
+%{_mandir}/man1/gdbmtool.1.gz
