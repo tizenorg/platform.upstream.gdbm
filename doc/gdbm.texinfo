@@ -1,14 +1,16 @@
 \input texinfo  @c -*- Texinfo -*-
-@comment $Id: gdbm.texinfo,v 1.21 2011/11/12 22:40:14 gray Exp $
+@comment $Id: gdbm.texinfo,v 1.34 2013/12/25 09:31:59 gray Exp $
 @comment %**start of header (This is for running Texinfo on a region.)
 @setfilename gdbm.info
 @include version.texi
-@settitle gdbm manual
+@settitle GDBM manual
 
 @ifinfo
 @dircategory Programming & development tools
 @direntry
 * GDBM: (gdbm).                 The GNU database manager.
+* gdbm_dump: gdbm_dump(gdbm).   Dump the GDBM database into a flat file.
+* gdbm_load: gdbm_load(gdbm).   Load the database from a flat file.
 @end direntry
 @end ifinfo
 
@@ -21,6 +23,9 @@
 @c Use @flindex for files
 @defcodeindex fl
 @syncodeindex fl cp
+@c Use @prindex for programs
+@defcodeindex pr
+@syncodeindex pr cp
 
 @c Merge all indices into a single one
 @syncodeindex fn cp
@@ -34,21 +39,18 @@
 @end iftex
 
 @copying
-This file documents the GNU dbm utility.
+Published by the Free Software Foundation,
+51 Franklin Street, Fifth Floor
+Boston, MA 02110-1301, USA
 
-Copyright @copyright{} 1989-1999, 2007, 2008, 2009-2011 Free Software Foundation, Inc.
+Copyright @copyright{} 1989-1999, 2007-2011 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
-Invariant Sections, with the Front-Cover Texts being ``The GNU Database
-Manager,'' and with the Back-Cover Texts as in (a) below.  A copy of the
-license is included in the section entitled ``GNU Free Documentation
-License.''
-
-(a) The FSF's Back-Cover Text is: ``You have the freedom to
-copy and modify this GNU manual.  Buying copies from the FSF
-supports it in developing GNU and promoting software freedom.''
+Invariant Sections, no Front-Cover, and no Back-Cover texts.
+A copy of the license is included in the section entitled ``GNU Free
+Documentation License.''
 @end copying
 
 @titlepage
@@ -67,32 +69,8 @@ supports it in developing GNU and promoting software freedom.''
 @center for GNU @code{dbm}, Version @value{VERSION}
 @page
 @vskip 0pt plus 1filll
-Copyright @copyright{} 1993-1999, 2007-2011 Free Software Foundation, Inc.
-@sp 2
-
-This is Edition @value{EDITION} of the @cite{GNU @code{dbm} Manual},
-for @code{gdbm} Version @value{VERSION}.  @*
-Last updated @value{UPDATED}
-
-Published by the Free Software Foundation @*
-675 Massachusetts Avenue, @*
-Cambridge, MA 02139 USA @*
-
-Permission is granted to make and distribute verbatim copies of
-this manual provided the copyright notice and this permission notice
-are preserved on all copies.
-
-Permission is granted to copy and distribute modified versions of this
-manual under the conditions for verbatim copying, provided also that
-the entire resulting derived work is distributed under the terms of a
-permission notice identical to this one.
-
-Permission is granted to copy and distribute translations of this manual
-into another language, under the above conditions for modified versions,
-except that this permission notice may be stated in a translation approved
-by the Free Software Foundation.
+@insertcopying
 @end titlepage
-@page
 
 @ifnothtml
 @page
@@ -107,9 +85,9 @@ by the Free Software Foundation.
 
 GNU @code{dbm} is a library of functions implementing a hashed database
 on a disk file.  This manual documents GNU @code{dbm} Version @value{VERSION}
-(@code{gdbm}).  The software was originally written by Philip A.  Nelson.  This
-document was originally written by Pierre Gaumond from texts written by
-Phil.
+(@code{gdbm}).  The software was originally written by Philip A.@:
+Nelson.  This document was originally written by Pierre Gaumond from
+texts written by Phil.
 @end ifnottex
 
 @menu
@@ -123,6 +101,7 @@ Functions:
 
 * Open::                       Opening the database.
 * Close::                      Closing the database.
+* Count::                      Counting records in the database.
 * Store::                      Inserting and replacing records in the database.
 * Fetch::                      Searching records in the database.
 * Delete::                     Removing records from the database.
@@ -134,16 +113,20 @@ Functions:
 * Options::                    Setting internal options.
 * Locking::                    File locking.
 
-Programs
-
-* testgdbm::                   Test and modify a GDBM database. 
-* gdbmexport::                 Export a database into a portable format.  
-
-Other topics:
-
 * Error codes::                Error codes returned by @code{gdbm} calls.
 * Variables::                  Two useful variables.
 * Compatibility::              Compatibility with UNIX dbm and ndbm.
+
+Programs
+
+* gdbmtool::                   Examine and modify a GDBM database.
+* gdbm_dump::                  Dump the database into a flat file.          
+* gdbm_load::                  Load the database from a flat file.
+* gdbmexport::                 Export a database into a portable format.  
+* Exit codes::                 Exit codes returned by GDBM utilities.
+
+Other topics:
+
 * Bugs::                       Problems and bugs.
 * Resources::                  Additional resources,
 
@@ -242,6 +225,12 @@ int gdbm_exists(dbf, key);
 char *gdbm_strerror(errno);
 int gdbm_setopt(dbf, option, value, size);
 int gdbm_fdesc(dbf);
+int gdbm_export (GDBM_FILE, const char *, int, int);
+int gdbm_export_to_file (GDBM_FILE dbf, FILE *fp);
+int gdbm_import (GDBM_FILE, const char *, int);
+int gdbm_import_from_file (GDBM_FILE dbf, FILE *fp, int flag);
+int gdbm_count (GDBM_FILE dbf, gdbm_count_t *pcount);
+int gdbm_version_cmp (int const a[], int const b[]);
 @end example
 
 The @code{gdbm.h} include file is often in the @file{/usr/local/include}
@@ -359,6 +348,17 @@ associated with it.  The parameter is:
 @item dbf
 The pointer returned by @code{gdbm_open}.
 @end table
+@end deftypefn
+
+@node Count
+@chapter Number of Records
+@cindex number of records
+@deftypefn {gdbm interface} int gdbm_count (GDBM_FILE @var{dbf}, @
+  gdbm_count_t *@var{pcount})
+Counts number of records in the database @var{dbf}.  On success,
+stores it in the memory location pointed to by @var{pcount} and return
+0.  On error, sets @code{gdbm_errno} (if relevant, also @code{errno})
+and returns -1.
 @end deftypefn
 
 @node Store
@@ -651,8 +651,12 @@ immediately after the set of changes have been made.
 @cindex Flat file format
 @cindex export
 @cindex import
-@code{Gdbm} databases can be converted into a portable @dfn{flat
-format}.  This format can be used, for example, to migrate between
+@code{Gdbm} databases can be converted into so-called @dfn{flat
+format} files.  Such files cannot be used for searching, their sole
+purpose is to keep the data from the database for restoring it when
+the need arrives.  There are two flat file formats, which differ in
+the way they represent the data and in the amount of meta-information
+stored.  Both formats can be used, for example, to migrate between
 the different versions of @code{gdbm} databases.  Generally speaking,
 flat files are safe to send over the network, and can be used to
 recreate the database on another machine.  The recreated database is
@@ -660,7 +664,7 @@ guaranteed to be a byte-to-byte equivalent of the database from which
 the flat file was created.  This does not necessarily mean, however,
 that this file can be used in the same way as the original one.  For
 example, if the original database contained non-@acronym{ASCII} data
-(e.g.  @acronym{C} structures, integers etc.), the recreated database
+(e.g.@: @acronym{C} structures, integers etc.), the recreated database
 can be of any use only if the target machine has the same integer
 size and byte ordering as the source one and if its @acronym{C}
 compiler uses the same packing conventions as the one which generated
@@ -669,25 +673,52 @@ binary databases are not portable between machines, unless you follow
 some stringent rules on what data is written to them and how it is
 interpreted.
 
-@deftypefn {gdbm interface} int gdbm_export (GDBM_FILE @var{dbf}, @
-           const char *@var{exportfile}, int @var{flag}, int @var{mode})
-Create a flat file from the @code{gdbm} database.  The parameters are:
+The GDBM version @value{VERSION} supports two flat file formats.  The
+@dfn{binary} flat file format was first implemented in GDBM version
+1.9.1.  This format stores only key/data pairs, it does not keep
+information about the database file itself.  As its name implies,
+files in this format are binary files.
+
+The @dfn{ascii} flat file format encodes all data in base64 and stores
+not only key/data pairs, but also the original database file metadata,
+such as file name, mode and ownership.  Files in this format can be
+sent without additional encapsulation over transmission channels that
+normally allow only ASCII data, such as, e.g.@: SMTP.  Due to additional
+metadata they allow for restoring an exact copy of the database,
+including file ownership and privileges, which is especially important
+if the database in question contained some security-related data.
+
+We call a process of creating a flat file from a database
+@dfn{exporting} or @dfn{dumping} this database.  The reverse process,
+creating the database from a flat file is called @dfn{importing} or
+@dfn{loading} the database.
+
+@deftypefn {gdbm interface} int gdbm_dump (GDBM_FILE @var{dbf}, @
+    const char *@var{filename}, int @var{format}, @
+    int @var{open_flags}, int @var{mode})
+Dumps the database file to the named file in requested format.
+Arguments are:
 
 @table @var
 @item dbf
-A pointer to the source database, returned by a call to
-@code{gdbm_open}.  The database must be open in @samp{GDBM_WRITER} mode.
+A pointer to the source database, returned by a prior call to
+@code{gdbm_open}.
 
-@item exportfile
-The name of the output file.
+@item filename
+Name of the dump file.
 
-@item flag
-@kwindex GDBM_WRCREAT
-@kwindex GDBM_NEWDB
-How to create the output file.  If @var{flag} is @samp{GDBM_WRCREAT},
-the file will be created if it does not exist already.  Otherwise, if
-it is @samp{GDBM_NEWDB}, it will be created if it does not exist, and
-truncated otherwise.
+@item format
+Output file format.  Allowed values are: @samp{GDBM_DUMP_FMT_BINARY} to
+create a binary dump and @samp{GDBM_DUMP_FMT_ASCII} to create an ASCII
+dump file.
+
+@item open_flags
+How to create the output file.  If @var{flag} is @samp{GDBM_WRCREAT}
+the file will be created if it does not exist.  If it does exist,
+the @code{gdbm_dump} will fail.
+
+If @var{flag} is @samp{GDBM_NEWDB}, the function will create a new
+output file, replacing it if it already exists.
 
 @item mode
 The permissions to use when creating the output file.
@@ -701,27 +732,165 @@ for a detailed discussion.
 @end table
 @end deftypefn
 
-@deftypefn {gdbm interface} int gdbm_import (GDBM_FILE @var{dbf}, @
-           const char *@var{importfile}, int @var{flag})
-Populates the database from an existing flat file.
+@anchor{gdbm_load function}
+@deftypefn {gdbm interface} int gdbm_load (GDBM_FILE *@var{pdbf}, @
+    const char *@var{filename}, int @var{flag}, @
+    int @var{meta_mask}, @
+    unsigned long *@var{errline})
+Loads data from the dump file @var{filename} into the database pointed
+to by @var{pdbf}.  The latter can point to @samp{NULL}, in which case 
+the function will try to create a new database.  If it succeeds, the
+function will return, in the memory location pointed to by @var{pdbf},
+a pointer to the newly created database.  If the dump file carries no 
+information about the original database file name, the function will
+set @code{gdbm_errno} to @samp{GDBM_NO_DBNAME} and return
+@samp{-1}, indicating failure.
+
+The @var{flag} has the same meaning as the @var{flag} argument
+to the @code{gdbm_store} function (@pxref{Store}).
+
+The @var{meta_mask} argument can be used to disable restoring certain
+bits of file's meta-data from the information in the input dump file.
+It is a binary OR of zero or more of the following:
+
+@table @asis
+@item GDBM_META_MASK_MODE
+Do not restore file mode.
+
+@item GDBM_META_MASK_OWNER
+Do not restore file owner.
+@end table
+
+The function returns 0 upon successful completion or -1 on fatal
+errors and 1 on mild (non-fatal) errors.
+
+If a fatal error occurs, @code{gdbm_errno} will be set to one of the
+following values:
+
+@table @asis
+@item GDBM_FILE_OPEN_ERROR
+Input file (@var{filename}) cannot be opened.  The @code{errno}
+variable can be used to get more detail about the failure.
+
+@item GDBM_MALLOC_ERROR
+Not enough memory to load data.
+
+@item GDBM_FILE_READ_ERROR
+Reading from @var{filename} failed.  The @code{errno} variable can be
+used to get more detail about the failure.
+
+@item GDBM_ILLEGAL_DATA
+Input contained some illegal data.
+
+@item GDBM_ITEM_NOT_FOUND
+This error can occur only when the input file is in ASCII format.  It
+indicates that the data part of the record about to be read lacked
+length specification.  Application developers are advised to treat
+this error equally as @samp{GDBM_ILLEGAL_DATA}.
+@end table
+
+Mild errors mean that the function was able to successfully load and
+restore the data, but was unable to change database file metadata
+afterward.  The table below lists possible values for @code{gdbm_errno}
+in this case.  To get more detail, inspect the system @code{errno} variable.
+
+@table @asis
+@kwindex GDBM_ERR_FILE_OWNER
+@item GDBM_ERR_FILE_OWNER
+The function was unable to restore database file owner.
+
+@kwindex GDBM_ERR_FILE_MODE
+@item GDBM_ERR_FILE_MODE
+The function was unable to restore database file mode (permission bits).
+@end table
+
+If an error occurs while loading data from an input file in ASCII
+format, the number of line in which the error occurred will be stored
+in the location pointed to by the @var{errline} parameter, unless it
+is @samp{NULL}.
+
+If the line information is not available or applicable, @var{errline}
+will be set to @samp{0}.
+@end deftypefn
+
+@deftypefn {gdbm interface} int gdbm_dump_to_file (GDBM_FILE @var{dbf}, @
+    FILE *@var{fp}, int @var{format})
+This is an alternative entry point to @code{gdbm_dump} (which see).
+Arguments are:
 
 @table @var
 @item dbf
 A pointer to the source database, returned by a call to
-@code{gdbm_open}.  The database must be open in @samp{GDBM_WRITER} mode.
+@code{gdbm_open}.
 
-@item importfile
-The name of the input flat file.  The file must exist.
+@item fp
+File to write the data to.
 
-@item flag
-The @var{flag} argument to be passed to @code{gdbm_store} function
-when adding new records.  @xref{Store}, for a description of its
-effect.
+@item format
+Format of the dump file.  See the @var{format} argument to the
+@code{gdbm_dump} function.
 @end table
 @end deftypefn
+    
+@deftypefn {gdbm interface} int gdbm_load_from_file (GDBM_FILE *@var{pdbf}, @
+    FILE *@var{fp}, int @var{replace}, int @var{meta_mask}, @
+    unsigned long *@var{line})
+This is an alternative entry point to @code{gdbm_dump}.  It writes the
+output to @var{fp} which must be a file open for writing.  The rest of
+arguments is the same as for @code{gdbm_load} (excepting of course
+@var{flag}, which is not needed in this case).
+@end deftypefn
 
-See also @ref{gdbmexport}, @ref{testgdbm export}, and
-@ref{testgdbm import}.
+@deftypefn {gdbm interface} int gdbm_export (GDBM_FILE @var{dbf}, @
+           const char *@var{exportfile}, int @var{flag}, int @var{mode})
+This function is retained for compatibility with GDBM 1.10 and
+earlier.  It dumps the database to a file in binary dump format and
+is entirely equivalent to
+
+@example
+gdbm_dump(@var{dbf}, @var{exportfile}, GDBM_DUMP_FMT_BINARY,
+          @var{flag}, @var{mode})
+@end example
+
+@end deftypefn
+
+@deftypefn {gdbm interface} int gdbm_export_to_file (GDBM_FILE @var{dbf}, FILE *@var{fp})
+This is an alternative entry point to @code{gdbm_export}.  This
+function writes to file @var{fp} a binary dump of the database @var{dbf}.
+@end deftypefn
+
+@deftypefn {gdbm interface} int gdbm_import (GDBM_FILE @var{dbf}, @
+           const char *@var{importfile}, int @var{flag})
+This function is retained for compatibility with GDBM 1.10 and
+earlier.  It loads the file @var{importfile}, which must be a binary
+flat file, into the database @var{dbf} and is equivalent to the
+following construct:
+
+@example
+@var{dbf} = gdbm_open (@var{importfile}, 0,
+                       @var{flag} == GDBM_REPLACE ?
+                         GDBM_WRCREAT : GDBM_NEWDB,
+                       0600, NULL);
+gdbm_load (&@var{dbf}, @var{exportfile}, 0, @var{flag}, NULL)
+@end example
+@end deftypefn
+
+@deftypefn {gdbm interface} int gdbm_import_from_file (GDBM_FILE @var{dbf}, @
+      FILE *@var{fp}, int @var{flag})
+An alternative entry point to @code{gdbm_import}.  Reads the binary
+dump from the file @var{fp} and stores the key/value pairs to
+@var{dbf}.  @xref{Store}, for a description of @var{flag}.
+
+This function is equivalent to:
+
+@example
+@var{dbf} = gdbm_open (@var{importfile}, 0,
+                       @var{flag} == GDBM_REPLACE ?
+                         GDBM_WRCREAT : GDBM_NEWDB,
+                       0600, NULL);
+gdbm_load_from_file (@var{dbf}, @var{fp}, @var{flag}, 0, NULL);
+@end example
+@end deftypefn
 
 @node Errors
 @chapter Error strings.
@@ -757,7 +926,7 @@ The parameters are:
 @item dbf
 The pointer returned by @code{gdbm_open}.
 @item option
-The option to be set or retreived.
+The option to be set or retrieved.
 @item value
 A pointer to the value to which @var{option} will be set or where to
 place the option value (depending on the option).
@@ -796,7 +965,7 @@ been altered by another calls to @code{gdbm_setopt}.
 
 @kwindex GDBM_FASTMODE
 @item GDBM_FASTMODE
-Enable or disable the @dfn{fast writes mode}, i.e. writes without
+Enable or disable the @dfn{fast writes mode}, i.e.@: writes without
 subsequent synchronization.  The @var{value} should point
 to an integer: @samp{TRUE} to enable fast mode, and @samp{FALSE} to
 disable it.
@@ -815,7 +984,7 @@ to an integer: @samp{TRUE} to turn synchronization on, and @samp{FALSE} to
 turn it off.
 
 Note, that this option is a reverse of @code{GDBM_FASTMODE},
-i.e. calling @code{GDBM_SETSYNCMODE} with @samp{TRUE} has the same effect
+i.e.@: calling @code{GDBM_SETSYNCMODE} with @samp{TRUE} has the same effect
 as calling @code{GDBM_FASTMODE} with @samp{FALSE}.
 
 The @samp{GDBM_SYNCMODE} option is provided for compatibility with
@@ -899,7 +1068,7 @@ char *name;
 if (gdbm_setopt (dbf, GDBM_GETDBNAME, &name, sizeof (name)))
   @{
      fprintf (stderr, "gdbm_setopt failed: %s\n",
-	      gdbm_strerror (gdbm_errno));
+              gdbm_strerror (gdbm_errno));
   @}
 else
   @{
@@ -941,347 +1110,6 @@ Returns the file descriptor of the database @var{dbf}.  This value
 can be used as an argument to @code{flock}, @code{lockf} or similar
 calls.
 @end deftypefn
-
-@node testgdbm
-@chapter Test and modify a GDBM database.
-@cindex testgdbm
-
-The @command{testgdbm} utility allows you to view and modify an
-existing @acronym{GDBM} database or to create a new one.
-
-@cindex default database, @command{testgdbm} 
-@cindex @option{-g}, @command{testgdbm} option
-@flindex junk.gdbm
-When invoked without options, it tries to open a database file called
-@file{junk.gdbm}, located in the current working directory.  You can
-change this default using the @option{-g} command line option.  This
-option takes a single argument, specifying the file name to open, e.g.:
-
-@example
-$ testgdbm -g file.db
-@end example
-
-@cindex read-only mode, @command{testgdbm}
-@cindex @option{-r}, @command{testgdbm} option
-The database will be opened in read-write mode, unless the @option{-r}
-option is specified, in which case it will be opened only for reading.
-
-@cindex creating a database, @command{testgdbm}
-@cindex @option{-n}, @command{testgdbm} option
-If the database does not exist, @command{testgdbm} will create it.
-There is a special option @option{-n}, which instructs the utility to
-create a new database.  If it is used and if the database already
-exists, it will be deleted, so use it sparingly.
-
-@menu
-* invocation::
-* shell::
-@end menu
-
-@node invocation
-@section testgdbm invocation
-@cindex command line options, @command{testgdbm}
-
-The following table summarizes all @command{testgdbm} command line
-options:
-
-@table @option
-@item -b @var{size}
-Set block size.
-@item -c @var{size}
-Set cache size.
-@item -g @var{file}
-Operate on @var{file} instead of the default @file{junk.gdbm}.
-@item -h
-Print a concise help summary.
-@item -n
-Create the database.
-@item -r
-Open the database in read-only mode.
-@item -s
-Synchronize to the disk after each write.
-@item -v
-Print program version and licensing information and exit.
-@end table
-
-@node shell
-@section testgdbm interactive mode
-@cindex interactive mode, @command{testgdbm}
-
-After successful startup, @command{testgdbm} starts a loop, in which
-it reads commands from the user, executes them and prints the results
-on the standard output.  If the standard input is attached to a console,
-@command{testgdbm} runs in interactive mode, which is indicated by its
-@dfn{prompt}:
-
-@example
-testgdbm> _
-@end example
-
-The utility finishes when it reads the @samp{quit} command (see below) or
-detects end-of-file on its standard input, whichever occurs first.
-
-A @command{testgdbm} command consists of a @dfn{command verb},
-optionally followed by one or two @dfn{arguments}, separated by any
-amount of white space.  A command verb can be entered either in full
-or in an abbreviated form, as long as that abbreviation does not match
-any other verb.  For example, @samp{co} can be used instead of
-@samp{count} and @samp{ca} instead of @samp{cache}.  Furthermore,
-many command verbs also have single-letter forms, called @dfn{command
-letters}.
-
-An argument is any sequence of non-whitespace characters.  Notice,
-that currently there is no way to enter arguments containing white
-space.  This limitation will be removed in future releases.
-
-Each command takes at most two @dfn{formal parameters}, which can be
-optional or mandatory.  If the number of actual arguments is less than the
-number of mandatory parameters, @command{testgdbm} will prompt you to
-supply missing arguments.  For example, the @samp{store} command takes two
-mandatory parameters, so if you invoked it with no arguments, you
-would be prompted twice to supply the necessary data, as shown in 
-example below:
-
-@example
-testgdbm> @kbd{store}
-key> @kbd{three}
-data> @kbd{3}
-@end example
-
-However, such prompting is possible only in interactive mode.  In
-non-interactive mode (e.g. when running a script), all arguments must
-be supplied with each command, otherwise @command{testgdbm} will report an
-error and exit immediately.
-
-@anchor{pager}
-@cindex pager, @command{testgdbm}
-@cindex @env{PAGER}
-Some commands produce excessive amounts of output.  To help you follow
-it, @command{testgdbm} uses a pager utility to display such
-output.  The name of the pager utility is taken from the environment
-variable @env{PAGER}.  The pager is invoked only in interactive mode
-and only if the estimated number of output lines is greater then the
-number of lines on your screen.  
-
-@anchor{nul-termination}
-Many of the @command{testgdbm} commands operate on database key and
-data values.  The utility assumes that both keys and data are
-@acronym{ASCII} strings, either nul-terminated or not.  By default,
-it is assumed that strings are nul-terminated.  You can change this
-by using @code{z} (@code{key-zero}, for keys) and @code{Z}
-(@code{data-zero}, for data) commands.
-
-The following table summarizes all available commands:
-
-@deffn {command verb} count
-@deffnx {command abbrev} co
-@deffnx {command letter} c
-Print the number of entries in the database.
-@end deffn
-
-@deffn {command verb} delete @var{key}
-@deffnx {command abbrev} de @var{key}
-@deffnx {command letter} d @var{key}
-Delete entry with a given @var{key}
-@end deffn
-
-@anchor{testgdbm export}
-@deffn {command verb} export @var{file-name} [truncate]
-@deffnx {command abbrev} e @var{file-name} [truncate]
-Export the database to the flat file @var{file-name}.  @xref{Flat files},
-for a description of the flat file format and its purposes.  This
-command will not overwrite an existing file, unless the word
-@samp{truncate} is given as its second argument.
-
-See also @ref{gdbmexport}.
-@end deffn
-
-@deffn {command verb} fetch @var{key}
-@deffnx {command abbrev} fe @var{key}
-@deffnx {command letter} f @var{key}
-Fetch and display a record with the given @var{key}.
-@end deffn
-
-@anchor{testgdbm import}
-@deffn {command verb} import @var{file-name} [replace]
-@deffnx {command abbrev} i @var{file-name} [replace]
-Import data from a flat dump file @var{file-name}
-(@pxref{Flat files}).  If the word @samp{replace} is given
-as the second argument, any records with the same keys as the already
-existing ones will replace them.
-@end deffn
-
-@deffn {command verb} list
-@deffnx {command abbrev} l
-List the contents of the database (@pxref{pager}).
-@end deffn
-
-@deffn {command verb} next [@var{key}]
-@deffnx {command abbrev} n [@var{key}]
-Sequential access: fetch and display a next record.  If @var{key} is
-given, a record following one with this key will be fetched.
-Otherwise, the key supplied by the latest @code{1}, @code{2} or
-@var{n} command will be used.
-
-See also @code{first}, below.
-
-@xref{Sequential}, for more information on sequential access.
-@end deffn
-
-@deffn {command verb} quit
-@deffnx {command abbrev} q
-Close the database and quit the utility.
-@end deffn
-
-@deffn {command verb} store @var{key} @var{data}
-@deffnx {command abbrev} sto @var{key} @var{data}
-@deffnx {command letter} s @var{key} @var{data}
-Store the @var{data} with @var{key} in the database.  If @var{key}
-already exists, its data will be replaced.
-@end deffn
-
-@deffn {command verb} first
-@deffnx {command abbrev} fi 
-@deffnx {command letter} 1
-Fetch and display the first record in the database.  Subsequent
-records can be fetched using @code{next} command (see above). 
-@xref{Sequential}, for more information on sequential access.
-@end deffn
-
-@deffn {command verb} read @var{file} [replace]
-@deffnx {command abbrev} rea @var{file} [replace] 
-@deffnx {command letter} < @var{file} [replace] 
-Read entries from @var{file} and store them in the database.  If the
-word @samp{replace} is given as the second argument, any existing
-records with matching keys will be replaced.
-@end deffn
-
-@deffn {command verb} reorganize
-@deffnx {command abbrev} reo 
-@deffnx {command letter} r
-Reorganize the database (@pxref{Reorganization}).
-@end deffn
-
-@deffn {command verb} key-zero
-@deffnx {command abbrev} k
-@deffnx {command letter} z
-Toggle key nul-termination.  Use @code{status} to inspect the current
-state.  @xref{nul-termination}.
-@end deffn
-
-@deffn {command verb} avail
-@deffnx {command abbrev} a
-@deffnx {command letter} A
-Print the @dfn{avail list}.
-@end deffn
-
-@deffn {command verb} bucket
-@deffnx {command abbrev} b
-@deffnx {command letter} B
-Print the bucket number @var{num}.
-@end deffn
-
-@deffn {command verb} current
-@deffnx {command abbrev} cu
-@deffnx {command letter} C
-Print the current bucket.
-@end deffn
-
-@deffn {command verb} dir
-@deffnx {command abbrev} di
-@deffnx {command letter} D
-Print hash directory.
-@end deffn
-
-@deffn {command verb} header
-@deffnx {command abbrev} hea
-@deffnx {command letter} F
-Print file header.
-@end deffn
-
-@deffn {command verb} hash @var{key}
-@deffnx {command abbrev} ha @var{key}
-@deffnx {command letter} H @var{key}
-Compute and display the hash value for the given @var{key}.
-@end deffn
-
-@deffn {command verb} cache
-@deffnx {command abbrev} ca
-@deffnx {command letter} K
-Print the bucket cache.
-@end deffn
-
-@deffn {command verb} status
-@deffnx {command abbrev} sta
-@deffnx {command letter} S
-Print current program status.  The following example shows the
-information displayed:
-
-@example
-Database file: junk.gdbm
-Zero terminated keys: yes
-Zero terminated data: yes
-@end example
-@end deffn
-
-@deffn {command verb} version
-@deffnx {command abbrev} v
-Print the version of @command{gdbm}.
-@end deffn
-
-@deffn {command verb} data-zero
-@deffnx {command abbrev} da 
-@deffnx {command letter} Z
-Toggle data nul-termination.  Use @code{status} to examine the current
-status.
-
-@xref{nul-termination}.
-@end deffn
-
-@deffn {command verb} help
-@deffnx {command abbrev} hel
-@deffnx {command letter} ?
-Print a concise command summary, showing each command letter and verb
-with its parameters and a short description of what it does.  Optional
-arguments are enclosed in square brackets.
-@end deffn
-
-@node gdbmexport
-@chapter Export a database into a portable format.
-@pindex gdbmexport
-
-The @command{gdbmexport} utility converts the database into a portable
-@dfn{flat format}.  Files in this format can be used to populate
-databases using the @code{gdbm_import} function (@pxref{Flat files,
-gdbm_import}) or the @code{i} command of @command{testgdbm} utility
-(@pxref{testgdbm import}).  In many cases files in this format are suitable for
-sending over the network to populate the database on another machine.
-The only exception to this are databases whose records contain
-non-@acronym{ASCII} data (e.g.  @acronym{C} structures, integers
-etc.).  For such databases you will be better off by writing a
-specialized utility to convert them to an architecture-independent
-format.
-
-If @command{gdbmexport} is linked with @file{libgdbm}
-version 1.8.3, it can be used to convert databases from old to new
-format.
-
-The utility takes two mandatory arguments: the name of the database
-file to convert and the output file name, e.g.:
-
-@example
-$ gdbmexport junk.gdbm junk.flat
-@end example
-
-In addition two options are understood:
-
-@table @option
-@item -h
-Display short usage summary and exit.
-
-@item -v
-Display program version and licensing information, and exit.
-@end table
 
 @node Variables
 @chapter Useful global variables.
@@ -1378,7 +1206,7 @@ gdbm_version_cmp (a, b) @result{} -1
 @chapter Error codes
 @cindex error codes
 
-This chapter summarizes the error codes which can be set by the
+This chapter summarizes error codes which can be set by the
 functions in @code{gdbm} library.
 
 @table @asis
@@ -1542,6 +1370,30 @@ these functions are: @code{gdbm_delete}, @code{gdbm_exists},
 @code{gdbm_fetch}, @code{gdbm_export}, @code{gdbm_import},
 @code{gdbm_reorganize}, @code{gdbm_firstkey}, @code{gdbm_nextkey},
 @code{gdbm_store}. 
+
+@kwindex GDBM_NO_DBNAME
+@item GDBM_NO_DBNAME
+Output database name is not specified.  This error code is set by
+@code{gdbm_load} (@pxref{gdbm_load function,,gdbm_load}) if the first
+argument points to @samp{NULL} and the input file does not specify the
+database name.
+
+@kwindex GDBM_ERR_FILE_OWNER
+@item GDBM_ERR_FILE_OWNER
+This error code is set by @code{gdbm_load} if it is unable to restore
+database file owner.  It is a mild error condition, meaning that the
+data have been restored successfully, only changing the target file
+owner failed.  Inspect the system @code{errno} variable to get a more
+detailed diagnostics.
+
+@kwindex GDBM_ERR_FILE_MODE
+@item GDBM_ERR_FILE_MODE
+This error code is set by @code{gdbm_load} if it is unable to restore
+database file mode.  It is a mild error condition, meaning that the data
+have been restored successfully, only changing the target file owner
+failed.  Inspect the system @code{errno} variable to get a more
+detailed diagnostics.
+
 @end table
 
 @node Compatibility
@@ -1805,6 +1657,848 @@ memory managed by the compatibility library.  The application should
 never free it.
 @end deftypefn
 
+@node gdbmtool
+@chapter Examine and modify a GDBM database.
+@prindex gdbmtool
+
+The @command{gdbmtool} utility allows you to view and modify an
+existing @acronym{GDBM} database or to create a new one.
+
+@cindex default database, @command{gdbmtool} 
+@flindex junk.gdbm
+When invoked without arguments, it tries to open a database file called
+@file{junk.gdbm}, located in the current working directory.  You can
+change this default by supplying the name of the database to use as
+an argument to the program, e.g.:
+
+@example
+$ gdbmtool file.db
+@end example
+
+@cindex read-only mode, @command{gdbmtool}
+@cindex @option{-r}, @command{gdbmtool} option
+@cindex @option{--read-only}, @command{gdbmtool} option
+The database will be opened in read-write mode, unless the
+@option{-r} (@option{--read-only}) option is specified, in which case
+it will be opened only for reading.
+
+@cindex creating a database, @command{gdbmtool}
+@cindex @option{-n}, @command{gdbmtool} option
+@cindex @option{--newdb}, @command{gdbmtool} option
+If the database does not exist, @command{gdbmtool} will create it.
+There is a special option @option{-n} (@option{--newdb}, which
+instructs the utility to create a new database.  If it is used and if
+the database already exists, it will be deleted, so use it sparingly.
+
+@menu
+* invocation::
+* shell::
+@end menu
+
+@node invocation
+@section gdbmtool invocation
+@cindex command line options, @command{gdbmtool}
+
+The following table summarizes all @command{gdbmtool} command line
+options:
+
+@table @option
+@item -b @var{size}
+@itemx --block-size=@var{size}
+Set block size.
+@item -c @var{size}
+@itemx --cache-size=@var{size}
+Set cache size.
+@item -f @var{file}
+@item --file @var{file}
+Read commands from @var{file}, instead of the standard input.
+@item -h
+@itemx --help
+Print a concise help summary.
+@item -N
+@itemx --norc
+Don't read startup files (@pxref{startup files}).
+@item -n
+@itemx --newdb
+Create the database.
+@item -l
+@itemx --no-lock
+Disable file locking.
+@item -m
+@itemx --no-mmap
+Disable mmap.
+@anchor{-q option}
+@item -q
+@itemx --quiet
+Don't print the usual welcome banner at startup.  This is the same as
+setting the variable @samp{quiet} in the startup file.  @xref{quiet}.
+@item -r
+@itemx --read-only
+Open the database in read-only mode.
+@item -s
+@itemx --synchronize
+Synchronize to the disk after each write.
+@item -V
+@itemx --version
+Print program version and licensing information and exit.
+@item --usage
+Print a terse invocation syntax summary along with a list of available
+command line options.
+@end table
+
+@node shell
+@section gdbmtool interactive mode
+@cindex interactive mode, @command{gdbmtool}
+
+After successful startup, @command{gdbmtool} starts a loop, in which
+it reads commands from the standard input, executes them and prints
+the results on the standard output.  If the standard input is attached
+to a console, @command{gdbmtool} runs in interactive mode, which is
+indicated by its @dfn{prompt}:
+
+@example
+gdbmtool> _
+@end example
+
+The utility finishes when it reads the @samp{quit} command (see below) or
+detects end-of-file on its standard input, whichever occurs first.
+
+A @command{gdbmtool} command consists of a @dfn{command verb},
+optionally followed by @dfn{arguments}, separated by any
+amount of white space.  A command verb can be entered either in full
+or in an abbreviated form, as long as that abbreviation does not match
+any other verb.  For example, @samp{co} can be used instead of
+@samp{count} and @samp{ca} instead of @samp{cache}.  
+
+Any sequence of non-whitespace characters appearing after the command
+verb forms an argument.  If the argument contains whitespace or
+unprintable characters it must be enclosed in double quotes.  Within
+double quotes the usual @dfn{escape sequences} are understood, as
+shown in the table below:
+
+@float Table, backslash-interpretation
+@caption{Backslash escapes}
+@multitable @columnfractions 0.30 .5
+@item Sequence @tab Replaced with
+@item \a @tab Audible bell character (@acronym{ASCII} 7)
+@item \b @tab Backspace character (@acronym{ASCII} 8)
+@item \f @tab Form-feed character (@acronym{ASCII} 12)
+@item \n @tab Newline character (@acronym{ASCII} 10)
+@item \r @tab Carriage return character (@acronym{ASCII} 13)
+@item \t @tab Horizontal tabulation character (@acronym{ASCII} 9)
+@item \v @tab Vertical tabulation character (@acronym{ASCII} 11)
+@item \\ @tab Single slash
+@item \" @tab Double quote
+@end multitable
+@end float
+
+In addition, a backslash immediately followed by the end-of-line
+character effectively removes that character, allowing to split long
+arguments over several input lines.
+
+Command parameters may be optional or mandatory.  If the number of
+actual arguments is less than the number of mandatory parameters,
+@command{gdbmtool} will prompt you to supply missing arguments.  For
+example, the @samp{store} command takes two mandatory parameters, so
+if you invoked it with no arguments, you would be prompted twice to
+supply the necessary data, as shown in  example below:
+
+@example
+gdbmtool> @kbd{store}
+key? @kbd{three}
+data? @kbd{3}
+@end example
+
+However, such prompting is possible only in interactive mode.  In
+non-interactive mode (e.g.@: when running a script), all arguments must
+be supplied with each command, otherwise @command{gdbmtool} will report an
+error and exit immediately.
+
+@menu
+* variables::      shell variables.
+* commands::       shell commands.
+* definitions::    how to define structured data.
+* startup files::
+@end menu
+
+@node variables
+@subsection Shell Variables
+@cindex variables, gdbmtool
+A number of @command{gdbmtool} parameters is kept in its internal
+variables.
+
+@deftypevr {gdbmtool variable} bool confirm
+Whether to ask for confirmation before certain destructive operations,
+such as truncating the existing database.
+
+Default is @samp{true}.
+@end deftypevr
+
+@deftypevr {gdbmtool variable} string ps1
+Primary prompt string.  Its value can contain @dfn{conversion
+specifiers}, consisting of the @samp{%} character followed by another
+character.  These specifiers are expanded in the resulting prompt as
+follows: 
+
+@multitable @columnfractions 0.4 0.5
+@headitem Sequence @tab Expansion
+@item %f @tab name of the current database file
+@item %p @tab program invocation name
+@item %P @tab package name (@samp{GDBM})
+@item %v @tab program version
+@item %_ @tab single space character
+@item %% @tab %
+@end multitable
+
+The default value is @samp{%p>%_}, i.e. the program name, followed by
+a ``greater than'' sign, followed by a single space.
+@end deftypevr
+
+@deftypevr {gdbmtool variable} string ps2
+Secondary prompt.  See @samp{ps1} for a description of its value.
+This prompt is displayed before reading the second and subsequent
+lines of a multi-line command.
+
+The default value is @samp{%_>%_}.
+@end deftypevr
+
+@deftypevr {gdbmtool variable} string delim1
+A string used to delimit fields of a structured datum on output
+(@pxref{definitions}).
+
+Default is @samp{,} (a comma).  This variable cannot be unset.
+@end deftypevr
+
+@deftypevr {gdbmtool variable} string delim2
+A string used to delimit array items when printing a structured datum
+(@pxref{definitions}).
+
+Default is @samp{,} (a comma).  This variable cannot be unset.
+@end deftypevr
+
+@deftypevr {gdbmtool variable} string pager
+The name and command line of the pager program to pipe output to.
+This program is used in interactive mode when the estimated number of
+output lines is greater then the number of lines on your screen.
+
+The default value is inherited from the environment variable
+@env{PAGER}.  Unsetting this variable disables paging.
+@end deftypevr
+
+@anchor{quiet}
+@deftypevr {gdbmtool variable} bool quiet
+Whether to display a welcome banner at startup.  This variable should
+be set in a startup script file (@pxref{startup files}).
+@xref{-q option}.
+@end deftypevr
+
+@anchor{open parameters}
+The following variables control how the database is opened:
+
+@deftypevr {gdbmtool variable} numeric blocksize
+Sets the block size.  @xref{Open, block_size}.  Unset by default.
+@end deftypevr
+
+@deftypevr {gdbmtool variable} numeric cachesize
+Sets the cache size.  @xref{Options, GDBM_SETCACHESIZE}.
+By default this variable is not set.
+@end deftypevr
+
+@anchor{openvar}
+@deftypevr {gdbmtool variable} string open
+Open mode.  The following values are allowed:
+
+@table @asis
+@item newdb
+Truncate the database if it exists or create a new one.  Open it in
+read-write mode.
+
+Technically, this sets the @samp{GDBM_NEWDB} flag in call to @samp{gdbm_open}.
+@xref{Open, GDBM_NEWDB}.
+@item wrcreat
+@itemx rw
+Open the database in read-write mode.  Create it if it does not
+exist.  This is the default.
+
+Technically speaking, it sets the @samp{GDBM_WRCREAT} flag in call to
+@code{gdbm_open}.  @xref{Open, GDBM_WRCREAT}.
+@item reader
+@itemx readonly
+Open the database in read-only mode.  Signal an error if it does not
+exist.
+
+This sets the @samp{GDBM_READER} flag (@pxref{Open, GDBM_READER}).
+@end table
+
+Attempting to set any other value or to unset this variable produces
+an error.
+@end deftypevr
+
+@anchor{filemode}
+@deftypevr {gdbmtool variable} number filemode
+File mode (in octal) for creating new database files and database
+dumps.
+@end deftypevr
+
+@deftypevr {gdbmtool variable} bool lock
+Lock the database.  This is the default.
+
+Setting this variable to false or unsetting it results in passing
+@samp{GDBM_NOLOCK} flag to @code{gdbm_open} (@pxref{Open, GDBM_NOLOCK}).
+@end deftypevr
+
+@deftypevr {gdbmtool variable} bool mmap
+Use memory mapping.  This is the default.
+
+Setting this variable to false or unsetting it results in passing
+@samp{GDBM_NOMMAP} flag to @code{gdbm_open} (@pxref{Open, GDBM_NOMMAP}).
+@end deftypevr
+
+@deftypevr {gdbmtool variable} bool sync
+Flush all database writes on disk immediately.  Default is false.
+@xref{Open, GDBM_SYNC}.
+@end deftypevr
+
+The following commands are used to list or modify the variables:
+
+@deffn {command verb} set [@var{assignments}]
+When used without arguments, lists all variables and their values.
+Unset variables are shown after a comment sign (@samp{#}).  For string
+and numeric variables, values are shown after an equals sign.  For
+boolean variables, only the variable name is displayed if the variable
+is @samp{true}.  If it is @samp{false}, its name is prefixed with
+@samp{no}. 
+
+For example:
+
+@example
+@group
+ps1="%p>%_"
+ps2="%_>%_"
+delim1=","
+delim2=","
+confirm
+# cachesize is unset
+# blocksize is unset
+open="wrcreat"
+lock
+mmap
+nosync
+pager="less"
+# quiet is unset
+@end group
+@end example
+
+If used with arguments, the @code{set} command alters the specified
+variables.  In this case, arguments are variable assignments in the
+form @samp{@var{name}=@var{value}}.  For boolean variables, the
+@var{value} is interpreted as follows: if it is numeric, @samp{0}
+stands for @samp{false}, any non-zero value stands for @samp{true}.
+Otherwise, the values @samp{on}, @samp{true}, and @samp{yes} denote
+@samp{true}, and @samp{off}, @samp{false}, @samp{no} stand for
+@samp{false}.  Alternatively, only the name of a boolean variable can be
+supplied to set it to @samp{true}, and its name prefixed with
+@samp{no} can be used to set it to false.  For example, the following
+command sets the @samp{delim2} variable to @samp{;} and the
+@samp{confirm} variable to @samp{false}:
+
+@example
+set delim2=";" noconfirm
+@end example
+@end deffn
+
+@deffn {command verb} unset @var{variables}
+Unsets the listed variables.  The effect of unsetting depends on the
+variable.  Unless explicitly described in the discussion of the
+variables above, unsetting a boolean variable is equivalent to setting it to
+@samp{false}.  Unsetting a string variable is equivalent to assigning it
+an empty string.
+@end deffn
+
+@node commands
+@subsection Gdbmtool Commands
+
+@deffn {command verb} avail
+Print the @dfn{avail list}.
+@end deffn
+
+@deffn {command verb} bucket @var{num}
+Print the bucket number @var{num} and set it as the current one.
+@end deffn
+
+@deffn {command verb} cache
+Print the bucket cache.
+@end deffn
+
+@deffn {command verb} close
+Close the currently open database.
+@end deffn
+
+@deffn {command verb} count
+Print the number of entries in the database.
+@end deffn
+
+@deffn {command verb} current
+Print the current bucket.
+@end deffn
+
+@deffn {command verb} delete @var{key}
+Delete record with the given @var{key}
+@end deffn
+
+@deffn {command verb} dir
+Print hash directory.
+@end deffn
+
+@anchor{gdbmtool export}
+@deffn {command verb} export @var{file-name} [truncate] [binary|ascii]
+Export the database to the flat file @var{file-name}.  @xref{Flat files},
+for a description of the flat file format and its purposes.  This
+command will not overwrite an existing file, unless the
+@samp{truncate} parameter is also given.  Another optional argument
+determines the type of the dump (@pxref{Flat files}).  By default, ASCII
+dump is created.
+
+The global variable @code{filemode} specifies the permissions to use
+for the created output file.
+
+See also @ref{gdbmexport}.
+@end deffn
+
+@deffn {command verb} fetch @var{key}
+Fetch and display the record with the given @var{key}.
+@end deffn
+
+@deffn {command verb} first
+Fetch and display the first record in the database.  Subsequent
+records can be fetched using the @code{next} command (see below). 
+@xref{Sequential}, for more information on sequential access.
+@end deffn
+
+@deffn {command verb} hash @var{key}
+Compute and display the hash value for the given @var{key}.
+@end deffn
+
+@deffn {command verb} header
+Print file header.
+@end deffn
+
+@deffn {command verb} help
+@deffnx {command verb} ?
+Print a concise command summary, showing each command verb
+with its parameters and a short description of what it does.  Optional
+arguments are enclosed in square brackets.
+@end deffn
+
+@anchor{gdbmtool import}
+@deffn {command verb} import @var{file-name} [replace] [nometa]
+Import data from a flat dump file @var{file-name}
+(@pxref{Flat files}).  If the word @samp{replace} is given
+as an argument, any records with the same keys as the already
+existing ones will replace them.  The word @samp{nometa} turns off
+restoring meta-information from the dump file.
+@end deffn
+
+@deffn {command verb} list
+List the contents of the database.
+@end deffn
+
+@deffn {command verb} next [@var{key}]
+Sequential access: fetch and display the next record.  If the @var{key} is
+given, the record following the one with this key will be fetched.
+
+See also @code{first}, above.
+
+@xref{Sequential}, for more information on sequential access.
+@end deffn
+
+@deffn {command verb} open @var{filename}
+Open the database file @var{filename}.  If successful, any previously
+open database is closed.  Otherwise, if the operation fails, the
+currently opened database remains unchanged.
+
+This command takes additional information from the following
+variables:
+
+@table @samp
+@item open
+The database access mode.  @xref{openvar,, The @var{open} variable},
+for a list of its values.
+@item lock
+Whether or not to lock the database.  Default is @samp{on}.
+@item mmap
+Use the memory mapping.  Default is @samp{on}.
+@item sync
+Synchronize after each write.  Default is @samp{off}.
+@item filemode
+Specifies the permissions to use in case a new file is created.
+@end table
+
+@xref{open parameters}, for a detailed description of these variables.
+@end deffn
+
+@deffn {command verb} quit
+Close the database and quit the utility.
+@end deffn
+
+@deffn {command verb} reorganize
+Reorganize the database (@pxref{Reorganization}).
+@end deffn
+
+@deffn {command verb} source @var{filename}
+Read @command{gdbmtool} commands from the file @var{filename}.
+@end deffn
+
+@deffn {command verb} status
+Print current program status.  The following example shows the
+information displayed:
+
+@example
+Database file: junk.gdbm
+Database is open
+define key string
+define content string
+@end example
+
+The two @samp{define} strings show the defined formats for key and
+content data.  @xref{definitions}, for a detailed discussion of their
+meaning.
+@end deffn
+
+@deffn {command verb} store @var{key} @var{data}
+Store the @var{data} with @var{key} in the database.  If @var{key}
+already exists, its data will be replaced.
+@end deffn
+
+@deffn {command verb} version
+Print the version of @command{gdbm}.
+@end deffn
+
+@node definitions
+@subsection Data Definitions
+GDBM databases are able to keep data of any type, both in the key and
+in the content part of a record.  Quite often these data are
+structured, i.e. they consist of several fields of various types.
+@command{Gdbmtool} provides a mechanism for handling such kind of
+records.
+
+The @code{define} command defines a record structure.  The general
+syntax is:
+
+@example
+define @var{what} @var{definition}
+@end example
+
+@noindent
+where @var{what} is @samp{key} to defining the structure of key data and
+@samp{content} to define the structure of the content records.
+
+The @var{definition} can be of two distinct formats.  In the simplest
+case it is a single data type.  For example,
+
+@example
+define content int
+@end example
+
+@noindent
+defines content records consisting of a single integer field.
+Supported data types are:
+
+@table @asis
+@item char
+Single byte (signed).
+@item short
+Signed short integer.
+@item ushort
+Unsigned short integer.
+@item int
+Signed integer.
+@item unsigned
+@itemx uint
+Unsigned integer.
+@item long
+Signed long integer.
+@item ulong
+Unsigned long integer.
+@item llong
+Signed long long integer.
+@item ullong
+Unsigned long long integer.
+@item float
+A floating point number.
+@item double
+Double-precision floating point number.
+@item string
+Array of bytes.
+@item stringz
+Null-terminated string, trailing null being part of the string.
+@end table
+
+All numeric data types (integer as well as floating point) have the
+same respective widths as in C language on the host where the database
+file resides.
+
+The @samp{string} and @samp{stringz} are special.  Both define a
+string of bytes, similar to @samp{char x[]} in C.  The former
+defines an array of bytes, the latter - a null-terminated string.
+This makes a difference, in particular, when the string is the only
+part of datum.  Consider the following two definitions:
+
+@enumerate 1
+@item @code{define key string}
+@item @code{define key stringz}
+@end enumerate
+
+@noindent
+Now, suppose we want to store the string "ab" in the key.  Using the
+definition (1), the @code{dptr} member of GDBM @code{datum} will
+contain two bytes: @samp{a}, and @samp{b}.  Consequently, the
+@code{dsize} member will have the value 2.  Using the definition (2),
+the @code{dptr} member will contain three bytes: @samp{a}, @samp{b},
+and ASCII 0.  The @code{dsize} member will have the value 3.
+
+The definition (1) is the default for both key and content.
+
+The second form of the @code{define} statement is similar to the C
+@code{struct} statement and allows for defining structural data.   In
+this form, the @var{definition} part is a comma-separated list of data
+types and variables enclosed in curly braces.  In contrast to the
+rest of @command{gdbm} commands, this command is inherently
+multiline and is terminated with the closing curly brace.  For
+example:
+
+@example
+define content @{
+        int status,
+        pad 8,
+        char id[3],
+        string name
+@}        
+@end example
+
+@noindent
+This defines a structure consisting of three members: an integer
+@code{status}, an array of 8 bytes @code{id}, and a null-terminated
+string @code{name}.  Notice the @code{pad} statement: it allows to
+introduce padding between structure members.  Another useful statement
+is @code{offset}: it specifies that the member following it begins at
+the given offset in the structure.  Assuming the size of @code{int} is
+8 bytes, the above definition can also be written as
+
+@example
+define content @{
+        int status,
+        offset 16,
+        char id[3],
+        string name
+@}        
+@end example
+
+@emph{NOTE}: The @samp{string} type can reasonably be used only if it
+is the last or the only member of the data structure.  That's because it
+provides no information about the number of elements in the array, so
+it is interpreted to contain all bytes up to the end of the datum.
+
+When displaying the structured data, @command{gdbmtool} precedes each
+value with the corresponding field name and delimits parts of the
+structure with the string defined in the @samp{delim1} variable
+(@pxref{variables}).  Array elements are delimited using the string from
+@samp{delim2}.  For example:
+
+@example
+gdbmtool> fetch foo
+status=2,id=@{ a, u, x @},name="quux"
+@end example
+
+To supply a structured datum as an argument to a @command{gdbmtool}
+command, use the same notation, but without field names, e.g.:
+
+@example
+gdbmtool> hash @{ 2, @{a,u,x@}, "quux" @}
+hash value = 13089969.
+@end example
+
+@node startup files
+@subsection Startup Files
+@cindex startup file, gdbmtool
+@cindex init file, gdbmtool
+@flindex .gdbmtoolrc
+Upon startup @command{gdbmtool} looks for a file named
+@samp{.gdbmtoolrc} first in the current working directory and, if not
+found, in the home directory of the user who started the command.
+
+If found, this file is read and interpreted as a list of
+@command{gdbmtool} commands.  This allows you to customize the
+program behavior.
+
+Following is an example startup file which disables the welcome
+banner, sets command line prompt to contain the name of the database
+file in parentheses and defines the structure of the database content
+records:
+
+@example
+@group
+set quiet
+set ps1="(%f) "
+define key stringz
+define content @{
+        int time,
+        pad 4,
+        int status
+@}
+@end group
+@end example
+
+@node gdbm_dump
+@chapter The @command{gdbm_dump} utility
+@prindex gdbm_dump
+
+The @command{gdbm_dump} utility creates a flat file dump of a GDBM
+database (@pxref{Flat files}).  It takes one mandatory argument: the
+name of the source database file.  The second argument, if given,
+specifies the name of the output file.  If not given,
+@command{gdbm_dump} will produce the dump on the standard output.
+
+For example, the following invocation creates a dump of the database
+@file{file.db} in the file @file{file.dump}:
+
+@example
+$ gdbm_dump file.db file.dump
+@end example
+
+By default the utility creates dumps in ASCII format (@pxref{Flat
+files,ASCII}).  Another format can be requested using the
+@option{--format} (@option{-H}) option.
+
+The @command{gdbm_dump} utility understands the following command line
+options:
+
+@table @option
+@item -H @var{fmt}
+@itemx --format=@var{fmt}
+Select output format.  Valid values for @var{fmt} are: @samp{binary}
+or @samp{0} to select binary dump format, and @samp{ascii} or @samp{1}
+to select ASCII format.
+
+@item -h
+@itemx --help
+Print a concise help summary.
+
+@item -V
+@itemx --version
+Print program version and licensing information and exit.
+
+@item --usage
+Print a terse invocation syntax summary along with a list of available
+command line options.
+@end table
+
+@node gdbm_load
+@chapter The @command{gdbm_load} utility
+@prindex gdbm_load
+
+The @command{gdbm_load} utility restores a GDBM database from a flat
+file.  The utility requires at least one argument: the name of the
+input flat file.  If it is @samp{-}, the standard input will be read.
+The format of the input file is detected automatically.
+
+By default the utility attempts to restore the database under its
+original name, as stored in the input file.  It will fail to do so if
+the input is in binary format.  In that case, the name of the database
+must be given as the second argument.
+
+In general, if two arguments are given the second one is treated as
+the name of the database to create, overriding the file name specified
+in the flat file.
+
+The utility understands the following command line arguments:
+
+@table @option
+
+@item -b @var{num}
+@itemx --block-size=@var{num}
+Sets block size.  @xref{Open, block_size}.
+
+@item -c @var{num}
+@itemx --cache-size=@var{num}
+Sets cache size.  @xref{Options, GDBM_SETCACHESIZE}.
+
+@item -M
+@itemx --mmap
+Use memory mapping.
+
+@item -m @var{mode}
+@item --mode=@var{mode}
+Sets the file mode.  The argument is the desired file mode in octal.
+
+@item -n
+@itemx --no-meta
+Do not restore file meta-data (ownership and mode) from the flat file.
+
+@item -r
+@itemx --replace
+Replace existing keys.
+
+@item -u @var{user}[:@var{group}]
+@itemx --user=@var{user}[:@var{group}]
+Set file owner.  The @var{user} can be either a valid user name or
+UID.  Similarly, the @var{group} is either a valid group name or GID.
+If @var{group} is not given, the main group of @var{user} is used.
+
+User and group parts can be separated by a dot, instead of the colon.
+                                    
+@item -h
+@itemx --help
+Print a concise help summary.
+
+@item -V
+@itemx --version
+Print program version and licensing information and exit.
+
+@item --usage
+Print a terse invocation syntax summary along with a list of available
+command line options.
+@end table
+
+@node gdbmexport
+@chapter Export a database into a portable format.
+@prindex gdbmexport
+
+The @command{gdbmexport} utility converts the database of an older
+GDBM version into a binary flat format.
+
+The utility takes two mandatory arguments: the name of the database
+file to convert and the output file name, e.g.:
+
+@example
+$ gdbmexport junk.gdbm junk.flat
+@end example
+
+In addition the following two options are understood:
+
+@table @option
+@item -h
+Display short usage summary and exit.
+
+@item -v
+Display program version and licensing information, and exit.
+@end table
+
+@node Exit codes
+@chapter Exit codes
+@cindex exit code
+
+All GDBM utilities return uniform exit codes.  These are summarized in
+the table below:
+
+@multitable @columnfractions 0.3 0.7
+@headitem Code @tab Meaning
+@item 0 @tab Successful termination.
+@item 1 @tab A fatal error occurred.
+@item 2 @tab Program was unable to restore file ownership or mode.
+@item 3 @tab Command line usage error.
+@end multitable
+
 @node Bugs
 @chapter Problems and bugs.
 
@@ -1841,24 +2535,24 @@ You may contact the authors and maintainers by e-mail:
 @chapter Additional resources
 
 For the latest updates and pointers to additional resources, visit
-@uref{http://www.gnu.org/software/gdbm}.
+@uref{http://www.gnu.org/@/software/@/gdbm}.
 
 In particular, a copy of @code{gdbm} documentation in various formats
-is available online at @uref{http://www.gnu.org/software/gdbm/manual}.
+is available online at @uref{http://www.gnu.org/@/software/@/gdbm/@/manual.html}.
 
 Latest versions of @code{gdbm} can be downloaded from anonymous FTP:
-@uref{ftp://ftp.gnu.org/gnu/gdbm}, or via HTTP from
-@uref{http://ftp.gnu.org/gnu/gdbm}, or from any
+@uref{ftp://ftp.gnu.org/@/gnu/@/gdbm}, or via HTTP from
+@uref{http://ftp.gnu.org/@/gnu/@/gdbm}, or from any
 @ifhtml
 @uref{http://www.gnu.org/order/ftp.html,,GNU mirror} worldwide.
 @end ifhtml
 @ifnothtml
-GNU mirror worldwide.  See @uref{http://www.gnu.org/order/ftp.html},
+GNU mirror worldwide.  See @uref{http://www.gnu.org/@/order/@/ftp.html},
 for a list of mirrors.
 @end ifnothtml
 
 To track @code{gdbm} development, visit
-@uref{http://puszcza.gnu.org.ua/projects/gdbm}.
+@uref{http://puszcza.gnu.org.ua/@/projects/@/gdbm}.
 
 @node GNU Free Documentation License
 @appendix GNU Free Documentation License

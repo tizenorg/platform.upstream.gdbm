@@ -23,9 +23,8 @@
 
 #include <gdbm.h>
 
-/* Include flatfile.c to pull in gdbm_export() */
-#define _GDBMEXPORT_
-#include "flatfile.c"
+/* Pull in gdbm_export() */
+#include "gdbmexp.c"
 
 void
 usage (char *s)
@@ -33,6 +32,7 @@ usage (char *s)
   printf ("Usage: %s database outfile\n", s);
   printf ("   or: %s [-hv]\n", s);
   printf ("Convert GDBM database into a flat dump format.\n");
+  printf ("Linked with %s\n", gdbm_version);
   printf ("\n");
   printf ("Report bugs to <%s>.\n", PACKAGE_BUGREPORT);
 }

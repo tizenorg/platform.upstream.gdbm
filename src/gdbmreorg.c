@@ -1,7 +1,7 @@
 /* gdbmreorg.c - Reorganize the database file. */
 
 /* This file is part of GDBM, the GNU data base manager.
-   Copyright (C) 1990, 1991, 1993, 2007, 2011 Free Software Foundation,
+   Copyright (C) 1990, 1991, 1993, 2007, 2011, 2013 Free Software Foundation,
    Inc.
 
    GDBM is free software; you can redistribute it and/or modify
@@ -184,12 +184,6 @@ gdbm_reorganize (GDBM_FILE dbf)
     free (dbf->bucket_cache);
   }
 
-#if HAVE_MMAP
-  /* Re-initialize mapping if required */
-  if (dbf->memory_mapping)
-    _gdbm_mapped_init (dbf);
-#endif
-  
   dbf->desc           = new_dbf->desc;
   dbf->header         = new_dbf->header;
   dbf->dir            = new_dbf->dir;
@@ -203,6 +197,12 @@ gdbm_reorganize (GDBM_FILE dbf)
   dbf->bucket_changed    = new_dbf->bucket_changed;
   dbf->second_changed    = new_dbf->second_changed;
    
+#if HAVE_MMAP
+  /* Re-initialize mapping if required */
+  if (dbf->memory_mapping)
+    _gdbm_mapped_init (dbf);
+#endif
+  
   free (new_dbf->name);   
   free (new_dbf);
   free (new_name);

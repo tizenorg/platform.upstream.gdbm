@@ -29,6 +29,8 @@
 #ifndef _GDBM_H_
 # define _GDBM_H_
 
+# include <stdio.h>
+
 /* GDBM C++ support */
 # if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
@@ -77,6 +79,8 @@ extern "C" {
 # define GDBM_GETMAXMAPSIZE   14 /* Get maximum mapped memory size */
 # define GDBM_GETDBNAME       15 /* Return database file name */
 
+typedef unsigned long long int gdbm_count_t;
+  
 /* The data and key structure. */
 typedef struct {
 	char *dptr;
@@ -84,14 +88,14 @@ typedef struct {
       } datum;
 
 
-/* The file information header. This is good enough for most applications. */
+/* A pointer to the GDBM file. */
 typedef struct gdbm_file_info *GDBM_FILE;
 
 /* External variable, the gdbm build release string. */
 extern const char *gdbm_version;	
 
 # define GDBM_VERSION_MAJOR 1
-# define GDBM_VERSION_MINOR 10
+# define GDBM_VERSION_MINOR 11
 # define GDBM_VERSION_PATCH 0
 
 extern int const gdbm_version_number[3];
@@ -111,8 +115,31 @@ extern void gdbm_sync (GDBM_FILE);
 extern int gdbm_exists (GDBM_FILE, datum);
 extern int gdbm_setopt (GDBM_FILE, int, void *, int);
 extern int gdbm_fdesc (GDBM_FILE);
+  
 extern int gdbm_export (GDBM_FILE, const char *, int, int);
+extern int gdbm_export_to_file (GDBM_FILE dbf, FILE *fp);
+  
 extern int gdbm_import (GDBM_FILE, const char *, int);
+extern int gdbm_import_from_file (GDBM_FILE dbf, FILE *fp, int flag);
+
+extern int gdbm_count (GDBM_FILE dbf, gdbm_count_t *pcount);
+  
+#define GDBM_DUMP_FMT_BINARY 0
+#define GDBM_DUMP_FMT_ASCII  1
+
+#define GDBM_META_MASK_MODE    0x01
+#define GDBM_META_MASK_OWNER   0x02
+  
+extern int gdbm_dump (GDBM_FILE, const char *, int fmt, int open_flags,
+		      int mode);
+extern int gdbm_dump_to_file (GDBM_FILE, FILE *, int fmt);
+
+extern int gdbm_load (GDBM_FILE *, const char *, int replace,
+		      int meta_flags,
+		      unsigned long *line);
+extern int gdbm_load_from_file (GDBM_FILE *, FILE *, int replace,
+				int meta_flags,
+				unsigned long *line);
 
 # define GDBM_NO_ERROR		0
 # define GDBM_MALLOC_ERROR	1
@@ -140,9 +167,12 @@ extern int gdbm_import (GDBM_FILE, const char *, int);
 # define GDBM_BAD_OPEN_FLAGS	23
 # define GDBM_FILE_STAT_ERROR   24
 # define GDBM_FILE_EOF          25
-
+# define GDBM_NO_DBNAME         26
+# define GDBM_ERR_FILE_OWNER    27
+# define GDBM_ERR_FILE_MODE     28
+  
 # define _GDBM_MIN_ERRNO		0
-# define _GDBM_MAX_ERRNO		GDBM_FILE_EOF
+# define _GDBM_MAX_ERRNO		GDBM_ERR_FILE_MODE
 typedef int gdbm_error;		/* For compatibilities sake. */
 extern gdbm_error gdbm_errno;
 extern const char * const gdbm_errlist[];

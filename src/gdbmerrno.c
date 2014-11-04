@@ -1,7 +1,7 @@
 /* gdbmerrno.c - convert gdbm errors into english. */
 
 /* This file is part of GDBM, the GNU data base manager.
-   Copyright (C) 1993, 2007, 2011  Free Software Foundation, Inc.
+   Copyright (C) 1993, 2007, 2011, 2013  Free Software Foundation, Inc.
 
    GDBM is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -54,6 +54,9 @@ const char * const gdbm_errlist[_GDBM_MAX_ERRNO+1] = {
   N_("Bad file flags"),		 /* GDBM_BAD_OPEN_FLAGS     	*/
   N_("Cannot stat file"),        /* GDBM_FILE_STAT_ERROR        */
   N_("Unexpected end of file"),  /* GDBM_FILE_EOF               */
+  N_("Database name not given"), /* GDBM_NO_DBNAME              */
+  N_("Failed to restore file owner"), /* GDBM_ERR_FILE_OWNER    */
+  N_("Failed to restore file mode"),  /* GDBM_ERR_FILE_MODE     */
 };
 
 const char *

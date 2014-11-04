@@ -1,7 +1,7 @@
 /* gdbmopen.c - Open the dbm file and initialize data structures for use. */
 
 /* This file is part of GDBM, the GNU data base manager.
-   Copyright (C) 1990, 1991, 1993, 2007, 2011 Free Software Foundation,
+   Copyright (C) 1990, 1991, 1993, 2007, 2011, 2013 Free Software Foundation,
    Inc.
 
    GDBM is free software; you can redistribute it and/or modify
@@ -277,7 +277,7 @@ gdbm_open (const char *file, int block_size, int flags, int mode,
       dbf->bucket->bucket_avail[0].av_size = dbf->header->block_size;
 
       /* Set table entries to point to hash buckets. */
-      for (index = 0; index < dbf->header->dir_size / sizeof (off_t); index++)
+      for (index = 0; index < GDBM_DIR_COUNT (dbf); index++)
 	dbf->dir[index] = 2*dbf->header->block_size;
 
       /* Initialize the active avail block. */

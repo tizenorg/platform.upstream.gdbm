@@ -1,7 +1,7 @@
 /* proto.h - The prototypes for the dbm routines. */
 
 /* This file is part of GDBM, the GNU data base manager.
-   Copyright (C) 1990, 1991, 1993, 2007, 2011 Free Software Foundation,
+   Copyright (C) 1990, 1991, 1993, 2007, 2011, 2013 Free Software Foundation,
    Inc.
 
    GDBM is free software; you can redistribute it and/or modify
@@ -21,6 +21,9 @@
 /* From bucket.c */
 void _gdbm_new_bucket	(GDBM_FILE, hash_bucket *, int);
 void _gdbm_get_bucket	(GDBM_FILE, int);
+int _gdbm_read_bucket_at (GDBM_FILE dbf, off_t off, hash_bucket *bucket,
+			  size_t size);
+
 void _gdbm_split_bucket (GDBM_FILE, int);
 void _gdbm_write_bucket (GDBM_FILE, cache_elem *);
 
@@ -58,5 +61,17 @@ int _gdbm_lock_file	(GDBM_FILE);
 /* From fullio.c */
 int _gdbm_full_read (GDBM_FILE, void *, size_t);
 int _gdbm_full_write (GDBM_FILE, void *, size_t);
+
+/* From base64.c */
+int _gdbm_base64_encode (const unsigned char *input, size_t input_len,
+			 unsigned char **output, size_t *output_size,
+			 size_t *outbytes);
+int _gdbm_base64_decode (const unsigned char *input, size_t input_len,
+			 unsigned char **output, size_t *output_size,
+			 size_t *inbytes, size_t *outbytes);
+
+int _gdbm_load (FILE *fp, GDBM_FILE *pdbf, unsigned long *line);
+int _gdbm_dump (GDBM_FILE dbf, FILE *fp);
+
 
 

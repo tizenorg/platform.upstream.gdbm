@@ -1,5 +1,5 @@
 # This file is part of GDBM.                                   -*- autoconf -*-
-# Copyright (C) 2007, 2009, 2011 Free Software Foundation, Inc.
+# Copyright (C) 2007, 2009, 2011, 2013 Free Software Foundation, Inc.
 #
 # GDBM is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,13 +15,14 @@
 # along with GDBM. If not, see <http://www.gnu.org/licenses/>. */
 
 m4_define([_GDBM_VERSION_MAJOR], 1)
-m4_define([_GDBM_VERSION_MINOR], 10)
-dnl m4_define([_GDBM_VERSION_PATCH], 90)
+m4_define([_GDBM_VERSION_MINOR], 11)
+dnl m4_define([_GDBM_VERSION_PATCH], 0)
 
 AC_INIT([gdbm],
         _GDBM_VERSION_MAJOR._GDBM_VERSION_MINOR[]m4_ifdef([_GDBM_VERSION_PATCH],._GDBM_VERSION_PATCH),
-	[bug-gdbm@gnu.org])
-AC_PREREQ(2.63)
+	[bug-gdbm@gnu.org],,
+	[http://www.gnu.org/software/gdbm])
+AC_PREREQ(2.69)
 AC_CONFIG_SRCDIR([src/gdbmdefs.h])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([autoconf.h])
@@ -83,19 +84,27 @@ AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 AC_SYS_LARGEFILE
-dnl AC_PROG_RANLIB
-dnl AC_C_BIGENDIAN([])
+AC_PROG_YACC
+AC_PROG_LEX
 AC_C_CONST
+AC_TYPE_UNSIGNED_LONG_LONG_INT
+
+AC_SUBST(GDBM_COUNT_T)
+if test $ac_cv_type_unsigned_long_long_int = yes; then
+	GDBM_COUNT_T="unsigned long long int"
+else
+	GDBM_COUNT_T="unsigned long"
+fi
 
 dnl Internationalization macros.
 AM_GNU_GETTEXT([external], [need-ngettext])
 AM_GNU_GETTEXT_VERSION(0.18)
 
-AC_CHECK_HEADERS([stdlib.h string.h sys/file.h unistd.h fcntl.h sys/types.h memory.h sys/termios.h locale.h])
+AC_CHECK_HEADERS([sys/file.h sys/termios.h string.h locale.h getopt.h])
 
 AC_CHECK_LIB(dbm, main)
 AC_CHECK_LIB(ndbm, main)
-AC_CHECK_FUNCS([rename ftruncate flock lockf fsync setlocale])
+AC_CHECK_FUNCS([rename ftruncate flock lockf fsync setlocale getopt_long])
 
 if test x$mapped_io = xyes
 then

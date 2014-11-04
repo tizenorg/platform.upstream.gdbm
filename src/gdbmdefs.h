@@ -1,7 +1,7 @@
 /* gdbmdefs.h - The include file for dbm.  Defines structure and constants. */
 
 /* This file is part of GDBM, the GNU data base manager.
-   Copyright (C) 1990, 1991, 1993, 2007, 2011 Free Software Foundation,
+   Copyright (C) 1990, 1991, 1993, 2007, 2011, 2013 Free Software Foundation,
    Inc.
 
    GDBM is free software; you can redistribute it and/or modify
@@ -61,7 +61,7 @@ typedef struct {
 	int   bucket_size;   /* Size in bytes of a hash bucket struct. */
 	int   bucket_elems;  /* Number of elements in a hash bucket. */
 	off_t next_block;    /* The next unallocated block address. */
-	avail_block avail;   /* This must be last because of the psuedo
+	avail_block avail;   /* This must be last because of the pseudo
 				array in avail.  This avail grows to fill
 				the entire block. */
       }  gdbm_file_header;
@@ -162,7 +162,7 @@ struct gdbm_file_info {
   
 	/* Type of file locking in use. */
 	enum { LOCKING_NONE = 0, LOCKING_FLOCK, LOCKING_LOCKF,
-		LOCKING_FCNTL } lock_type;
+	       LOCKING_FCNTL } lock_type;
 
 	/* The fatal error handling routine. */
 	void (*fatal_err) (const char *);
@@ -173,7 +173,7 @@ struct gdbm_file_info {
 	/* The file header holds information about the database. */
 	gdbm_file_header *header;
 
-	/* The hash table directory from extendible hashing.  See Fagin et al, 
+	/* The hash table directory from extendable hashing.  See Fagin et al, 
 	   ACM Trans on Database Systems, Vol 4, No 3. Sept 1979, 315-344 */
 	off_t *dir;
 
@@ -207,6 +207,8 @@ struct gdbm_file_info {
 				  begins */
       };
 
+#define GDBM_DIR_COUNT(db) ((db)->header->dir_size / sizeof (off_t))
+
 /* Execute CODE without clobbering errno */
 #define SAVE_ERRNO(code)			\
   do						\
@@ -216,6 +218,8 @@ struct gdbm_file_info {
       errno = __ec;				\
     }						\
   while (0)					\
+
+#define _GDBM_MAX_DUMP_LINE_LEN 76
 
 /* Now define all the routines in use. */
 #include "proto.h"

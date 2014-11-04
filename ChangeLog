@@ -1,3 +1,482 @@
+2013-12-25  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Version 1.11
+
+2013-12-25  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Minor changes.
+
+	* src/gdbm_load.c: New options: --mmap, --cache-size and
+	--block-size.
+
+	* doc/gdbm.texinfo: Document new gdbm_load options.
+	* doc/gdbm_load.1: Likewise.
+
+	* src/gdbmdelete.c: Stylistic changes.
+	* src/gdbmstore.c: Likewise.
+
+2013-05-21  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	New function gdbm_count.
+	
+	* configure.ac: Check for unsigned long long, define
+	substitution variable GDBM_COUNT_T.
+	* src/gdbmcount.c: New file.
+	* src/Makefile.am (libgdbm_la_SOURCES): Add gdbmcount.c.
+	* src/bucket.c (_gdbm_read_bucket_at): New function.
+	* src/gdbm.h.in (gdbm_count_t): New typedef.
+	(gdbm_count): New proto.
+	* src/gdbmdefs.h (GDBM_DIR_COUNT): New define.
+	* src/proto.h (_gdbm_read_bucket_at): New proto.
+	* src/var.c: New variable "filemode".
+
+	* src/gdbmtool.c: Use gdbm_count.  Various bugfixes.
+	
+	* NEWS: Update.
+	* doc/gdbm.texinfo: Update.
+	
+2013-05-17  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Update the docs.
+	
+	* NEWS: Update.
+	* doc/gdbm.texinfo: Update.
+	* doc/gdbmtool.1: Document the "define" statement.
+	* src/datconv.c: Rename string datatypes to reflect their
+	meaning.
+	(dsprint): Improve output presentation.
+	
+2013-05-16  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Provide support for a simplified "define" construct.
+
+	* doc/gdbm.texinfo: Document the "define" statement.
+	* src/datconv.c: Support short and ushort data types.
+	* src/gdbmtool.c: Don't call checkdb prior to handling
+	the "hash" command.
+	* src/gram.y: Support simplified definition construct:
+	"define key|content type".
+
+2013-05-16  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Improve handling of the variables.
+
+	* src/gdbmtool.c (opendb): Allow for unset variables.
+	* src/gram.y: Improve error detection.
+	* src/lex.l: Handle multiline strings.
+	(pe_file_name): file_name can be NULL.
+	* src/var.c (VARF_PROT): New flag. Protects the variable
+	from being unset.
+	(vartab): Use VARF_PROT if needed.
+	(s2b): Fix return values.
+	(variable_set, variable_unset): Return error if attempting
+	to unset a variable marked with VARF_PROT.
+
+	* doc/gdbm.info: Update.
+	* doc/gdbmtool.1: Update.
+
+2013-05-15  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Minor change
+
+	* src/gdbmtool.c (command_tab): Change variable names
+	in docstrings to uppercase.
+
+2013-05-15  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Implement the "quiet" variable.
+
+	* src/var.c (vartab) <quiet>: New variable.
+	(variable_is_true): Return 0 if the value cannot be
+	retrieved.
+	* src/gdbmtool.c (optab): New option --file (-f).
+	(main): Handle the --file option.
+	Retrieve the "quiet" setting from the variable.
+	* src/lex.l (context_pop): Clear both point.file
+	and yylloc.
+
+2013-05-15  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Add "pager" variable and "unset" command.
+
+	* src/gdbmtool.c (command_tab) <unset>: New command.
+	(run_command): Get pager value from the variable.
+	* src/gdbmtool.h (VAR_ERR_NOTSET): New error code.
+	(variable_is_true): New function. Replaces variable_is_set,
+	which changed semantics.
+	* src/gram.y: Implement the unset command.
+	* src/var.c: Support the "unset variable" notion.
+	(VARF_INIT): New flag.
+	(VAR_IS_SET): New define.
+	(vartab): Mark initialized variables with VARF_INIT.
+	New variable "pager".
+	(open_hook): v can be NULL.
+	(variable_set): NULL value unsets the variable.
+	(variable_unset): New function.
+	(variable_get): Return VAR_ERR_NOTSET if the variable is
+	not set.
+	(variable_is_true): Renamed from variable_is_set.
+	(variable_is_set): New function.
+	
+	* src/gdbmdefs.h: Fix some typos.
+
+2013-05-14  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Change variable handling. 
+	
+	* src/util.c: New file.
+	* src/Makefile.am: Add new files.
+	* src/gdbmtool.c (open_mode): New variable.
+	(terror): Remove.
+	(mkfilename, tildexpand): Move to util.c
+	(opendb): Use open_mode.
+	(import_handler): Likewise.
+	(optab): New option -N (--norc).
+
+	* src/gdbmtool.h (vparse_error): Rename to vlerror.
+	(parse_error): Rename to lerror.
+	(syntax_error): Rename tp terror.
+	All uses updated.
+	(VAR_ERR_FAILURE): Remove.
+	(VAR_ERR_BADVALUE): New error code.
+	(variable_mode_name): Remove.
+	(mkfilename, tildexpand)
+	(vgetyn, getyn): New protos.
+	* src/lex.l (initialized): New static.
+	(setsource): Set initialized.
+	(vlerror): Print locus only if the lexer has been
+	initialized.
+	* src/var.c: Rewrite.
+
+2013-05-14  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Provide "open" and "close" commands; implement new variables.
+	
+	* src/datconv.c (datum_format): Don't print field delimiter
+	after the last field.
+	(dsprint): Bugfix.
+	* src/gdbmload.c (gdbm_load_from_file): Return GDBM_NO_DBNAME 
+	when loading from bdb dump and the database pointer is NULL.
+	* src/gdbmtool.c (opendb, checkdb): New auxiliary functions.
+	(begin handlers): call checkdb.
+	(import_handler): Special handling for GDBM_NO_DBNAME.
+	(status_handler): Print more info.
+	(command_tab): Call checkdb prior to handlers that expect an
+	open database.
+	New commands: open, close
+	(gdbmarg_string, gdbmarg_datum)
+	(gdbmarg_kvpair): Take pointer to locus as the 2nd argument.
+	All uses changed.
+	(coerce): Include locus info in the diagnostic message.
+	(main): Don't open database right away.
+	* src/gdbmtool.h (GDBMTOOL_DEFFILE): New define.
+	(gdbmarg) <loc>: New member.
+	(VART_INT): New variable typ.e
+	(VAR_ERR_FAILURE): New error code.
+	(variable_is_set, varible_mode_name): New protos.
+	* src/gram.y: Provide printable token names for error messages.
+	Pass locus to gdbmarg initialization functions.
+	* src/lex.l (vparse_error): Fix output.
+	* src/var.c (variable) <v.num, hook, hook_data>: New members.
+	(vartab): Define more variables.
+	(variable_set): Accept value of any valid datatype. 
+	(variable_mode_name, variable_is_set): New functions.
+
+2013-05-14  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Cleanup.
+	
+	* src/datconv.c (s_float): Use strtod.
+	(datum_scan_notag, datum_scan_tag): Made static.
+	(dsprint): New function.
+	* src/gdbmtool.c (status_handler): Print key and
+	content definitions.
+	(slist_new): Bugfix (missing return statement).
+	* src/gdbmtool.h: Add new prototypes.
+	* src/lex.l: Remove unused variables, set option
+	nounput.
+
+2013-05-14  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Implement rc files and "source" command; improve lexical analyzer.
+
+	* src/gdbmtool.c (interactive): Move to lex.l;
+	(mkfilename, tildexpand): New functions.
+	(command_tab) <source>: New command.
+	(main): Source rc file, if present.
+	* src/gdbmtool.h (setsource): Change return type
+	and signature.
+	* src/lex.l: Implement context stack.
+	Change DEF to be an exclusive state.
+
+	* src/gdbmapp.h (estrdup): Argument is const.
+	* src/mem.c: Likewise.
+
+2013-05-14  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Add support for Berkeley dump format version 3 (read-only).
+
+	* src/gdbmapp.h: Include gettext.h and locale.h.
+	* src/gdbmload.c: Support for Berkeley dump format,
+	version 3.
+
+2013-05-13  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Remove the "read" command.  Use "import" instead.
+
+2013-05-13  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Add "set" and "define" to the main command table.
+
+	* src/gdbmtool.c: Include gram.h
+	(command) <tok>: New member.
+	(command_tab): List "define" and "set".
+	(find_command): Rewrite as command_lookup, with different
+	return type and signature.
+	(run_command): Take struct command * as its first argument.
+	* src/gdbmtool.h (command_lookup): New proto.
+	(run_command): Change signature.
+	(datadef_locate): Rename to datadef_lookup. All uses changed.
+	* src/gram.y: Update.
+	* src/lex.l: Change handling of IDENT rules.
+
+2013-05-13  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Implement shell variables in gdbmtool.
+
+	* src/var.c: New file.
+	* src/Makefile.am: Add var.c
+	* src/datconv.c (datum_format): Remove the "delim"
+	parameter, use "delim1" and "delim2" shell variables
+	instead.
+	* src/gdbmtool.c: Remove "prompt" command. Use "set ps[12]"
+	instead.
+	(print_prompt): Move to lex.l
+	* src/gdbmtool.h (variable_set)
+	(variable_get, variable_print_all): New protos.
+	* src/gram.y: Handle the "set" command.
+	* src/lex.l: Update.
+
+2013-05-13  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Handle structured key and content data in gdbmtool.
+
+	* src/datconv.c: New file.
+	* src/Makefile.am (gdbmtool_SOURCES): Add datconv.c.
+	* src/gdbmtool.h (slist, kvpair): New structures.
+	(gdbmarg): Keep various types of data depending on the
+	value of the type member.
+	(slist_new, slist_free)
+	(kvpair_string, kvpair_list): New protos.
+	(gdbmarg_new): Remove.
+	(gdbmarg_string, gdbmarg_datum)
+	(gdbmarg_kvpair, gdbmarg_free)
+	(gdbmarg_destroy): New protos.
+	(xd_expand, xd_store, datadef_locate): New protos.
+	(field, dsegm): New structs.
+	(dsegm_new, dsegm_new_field, dsegm_free_list): New protos.
+	* src/gdbmtool.c: Rewrite.
+	* src/gram.y: Change grammar to allow for defining key and
+	content structure and for supplying structured data as arguments
+	to fetch, store and similar functions.
+	* src/lex.l: Handle new token types.
+
+	* tests/dtload.c (main): Fix parser.
+	* tests/gtload.c: Likewise.
+
+2013-05-11  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Rewrite gdbmtool parser.
+
+	* src/testgdbm.c: Remove.
+	* src/gdbmtool.c: New file.
+	* src/gdbmtool.h: New file.
+	* src/gram.y: New file.
+	* src/lex.l: New file.
+	* src/Makefile.am: Update.
+
+2013-05-09  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Add new prompt escapes.
+
+	* src/testgdbm.c: New prompt escapes: %p, %P, %v, %_.
+	Change default prompt to %p>%_.
+	* doc/gdbmtool.1: Document new prompt escapes.
+
+2013-05-08  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Rename testgdbm to gdbmtool. Improve documentation.
+
+	* configure.ac: Fix a typo.
+	* src/.cvsignore: Add gdbmtool
+	* src/Makefile.am: Rename testgdbm to gdbmtool. Source
+	file not renamed because of CVS deficiency.
+	* src/gdbm_dump.c: Enable NLS.
+	* src/gdbm_load.c: Likewise.
+	* src/testgdbm.c: New option -q (--quiet).
+	New command: prompt.
+	* doc/Makefile.am (man_MANS): Add new manpages.
+	* doc/gdbmtool.1: New file.
+	* doc/gdbm_load.1: New file.
+	* doc/gdbm_dump.1: New file.
+	* doc/gdbm.3: Update.
+	* doc/gdbm.texinfo: Update.
+
+2013-05-08  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	* configure.ac: (AC_INIT): Add webpage URL.
+
+2013-05-08  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Improve testgdbm; install some more bugfixes.
+
+	* src/gdbmdefs.h: Fix typo in a comment.
+	* src/gdbmdump.c (gdbm_dump_to_file): Improve error
+	checking.
+	* src/testgdbm.c: Improve interactive usage.
+	(command) <minlen>: Rename to len.
+	(command_tab): Initialize len.
+	(set_minimal_abbreviations): Remove.
+	(sort_commands): New function.
+	(find_command): Print possible alternatives in case of
+	ambiguous input.
+	(main): Reset param.argc after freeing previous arguments.
+	Continue silently if find_command returns NULL.
+
+2013-05-07  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Bugfix.
+
+	* src/gdbmreorg.c: Call _gdbm_mapped_init when the database
+	structure is fully initialized (Puszcza bug #171).
+
+2013-05-07  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Minor change
+	
+	* configure.ac: Require autoconf 2.69 or newer (in response
+	to Puszcza bug #171).
+
+2012-03-21  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	* tests/create00.at: Use cmp -s || diff -u instead of plain
+	diff, because the latter produces extra output on some systems
+	(notably Solaris).
+	* tests/dbmcreate00.at: Likewise.
+	* THANKS: Add Bill Jones
+
+2011-11-16  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Improve testgdbm
+	
+	* src/mem.c (ealloc_die): Return EXIT_FATAL to the shell.
+	* src/testgdbm.c: Use emalloc, erealloc and estrdup for memory
+	allocation.
+	(syntax_error): New function.
+	(handler_param): New struct.
+	(all handlers): Change signature.  Take a pointer to struct
+	handler_param as argument.
+	(export_handler,import_handler): Handle new formats.
+	(main): Take first argument to be the file name.
+	(optab): Remove -f argument.  Hide -g, but retain it for
+	backward compatibility.
+
+	* doc/gdbm.texinfo: Update.
+
+2011-11-15  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Version 1.10.90
+
+	Update the docs.  Improve dump/load utilities.
+	
+	* doc/gdbm.texinfo: Reorganize the material.  Document gdbm_load
+	and gdbm_dump utilities.
+	* src/gdbm.h.in (GDBM_META_MASK_MODE)
+	(GDBM_META_MASK_OWNER): New constant.
+	(gdbm_load,gdbm_load_from_file): Take an additional argument:
+	meta_flags, which masks out restoring certain meta-data.
+	* src/gdbm_dump.c: Remove -b option.  The -H option takes symbolic
+	format names.  Use the standard exit codes.
+	* src/gdbm_load.c: New options: --mode, --user and --no-meta.
+	Use the standard exit codes.
+	* src/gdbmapp.h (EXIT_OK, EXIT_FATAL, EXIT_MILD)
+	(EXIT_USAGE): New constants.
+	* src/gdbmload.c (gdbm_load,gdbm_load_from_file): Take an
+	additional argument, which masks out restoring certain meta-data.
+	
+2011-11-15  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Return a meaningful error code if failed to restore file's metadata.
+	
+	* src/gdbm.h.in (GDBM_ERR_FILE_OWNER)
+	(GDBM_ERR_FILE_MODE): New error codes.
+	(_GDBM_MAX_ERRNO): Update.
+	* src/gdbmerrno.c (gdbm_errlist): Add new error codes.
+	* src/gdbmload.c (_set_gdbm_meta_info): Set gdbm_errno and
+	return 1 in case of errors.
+	(_gdbm_load_file): Propagate the return value from
+	_set_gdbm_meta_info.
+	
+	* src/gdbm_load.c (main): Handle mild error conditions.
+	* export/export.c (usage): Print the GDBM version the program is
+	linked with.
+	* doc/gdbm.texinfo: Document changes. 
+
+2011-11-14  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	* doc/gdbm.texinfo (Error codes): Document new flat format and
+	related functions.
+	* po/POTFILES.in: Update
+
+2011-11-13  Sergey Poznyakoff  <gray@gnu.org.ua>
+
+	Implement new dump format.  Add new utilities: gdbm_dump and gdbm_load.
+	
+	* configure.ac (AC_CHECK_HEADERS): Don't check for files that must
+	always be present.  Check for getopt.h.
+	(AC_CHECK_FUNCS): Add getopt_long
+	* src/systems.h: Include useless #if's. 
+
+	* src/flatfile.c: Split into two files:
+	* src/gdbmexp.c: ... this and ...
+	* src/gdbmimp.c: .., this
+	
+	* src/mem.c: New file.
+	* src/base64.c: New file.
+	* src/gdbm_dump.c: New file.
+	* src/gdbm_load.c: New file.
+	* src/gdbmapp.h: New file.
+	* src/gdbmdump.c: New file.
+	* src/gdbmload.c: New file.
+	* src/parseopt.c: New file.
+	* src/progname.c: New file.
+	* src/.cvsignore: Update.
+	* src/Makefile.am (libgdbm_la_SOURCES): Add new files.
+	(noinst_LIBRARIES): New variable. Build libgdbmapp.a.
+	(libgdbmapp_a_SOURCES): New variable.
+	(bin_PROGRAMS): Add gdbm_load and gdbm_dump
+	(testgdbm_LDADD, gdbm_load_LDADD)
+	(gdbm_dump_LDADD): Add ./libgdbmapp.a
+
+	* src/gdbm.h.in: Include <stdio.h>
+	(gdbm_export_to_file)
+	(gdbm_import_from_file): New prototypes.
+	(GDBM_DUMP_FMT_BINARY,GDBM_DUMP_FMT_ASCII): New constants.
+	(gdbm_dump,gdbm_load)
+	(gdbm_dump_to_file,gdbm_load_from_file): New prototypes.
+	(GDBM_NO_DBNAME): New error code.
+	(_GDBM_MAX_ERRNO): Update.
+	* src/gdbmdefs.h (_GDBM_MAX_DUMP_LINE_LEN): New constant.
+	* src/gdbmerrno.c (gdbm_errlist): Add entry for GDBM_NO_DBNAME.
+	* src/proto.h (_gdbm_base64_encode,_gdbm_base64_decode)
+	(_gdbm_load,_gdbm_dump): New prototypes.
+
+	* src/testgdbm.c: Use gdbmapp interface for option parsing.
+	
+	* export/export.c: Include gdbmexp.c
+	* export/.cvsignore: Update.
+	* doc/gdbm.texinfo: Update.
+	
 2011-11-13  Sergey Poznyakoff  <gray@gnu.org.ua>
 
 	Version 1.10
