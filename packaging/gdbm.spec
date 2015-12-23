@@ -5,7 +5,7 @@ Name:           gdbm
 Url:            http://directory.fsf.org/GNU/gdbm.html
 Version:        1.11
 Release:        0
-License:        GPL-2.0+
+License:        GPL-3.0+
 Summary:        GNU dbm key/data database
 Group:          System/Libraries
 Source:         ftp://prep.ai.mit.edu/gnu/gdbm/gdbm-%{version}.tar.gz
@@ -31,7 +31,6 @@ For compatibility with programs using old UNIX dbm functions, the
 package also provides traditional dbm and ndbm interfaces.
 
 %package -n %lname
-License:        GPL-2.0+
 Summary:        GNU dbm key/data database
 Group:          System/Libraries
 Obsoletes:      gdbm < %{version}-%{release}
@@ -55,7 +54,6 @@ For compatibility with programs using old UNIX dbm functions, the
 package also provides traditional dbm and ndbm interfaces.
 
 %package devel
-License:        GPL-2.0+ and LGPL-2.1+
 Summary:        Include Files and Libraries mandatory for Development
 Group:          System/Libraries
 Requires:       gdbm = %{version}
