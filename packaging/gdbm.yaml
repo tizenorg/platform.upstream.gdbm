@@ -1,0 +1,25 @@
+Name: gdbm
+Summary: GNU Database Routines
+Version: 1.8.3
+Release: 1
+Group: System/Libraries
+License: GPLv2+ and LGPLv2+
+URL: http://directory.fsf.org/GNU/gdbm.html
+Sources:
+    - http://ftp.gnu.org/pub/gnu/gdbm/gdbm-%{version}.tar.bz2
+Patches:
+    - gdbm-%{version}.dif
+    - gdbm-protoize_dbm_headers.patch
+    - gdbm-prototype_static_functions.patch
+    - gdbm-fix_testprogs.patch
+    - gdbm-destdir.patch
+    - gdbm-stamp.patch
+Description: A static and dynamic library for the GNU database routines.
+
+SubPackages:
+    - Name: devel
+      Summary: Include Files and Libraries mandatory for Development
+      Group: Development/Libraries
+      Description: |
+          This package contains all necessary include files and libraries needed
+          to develop applications that require these.

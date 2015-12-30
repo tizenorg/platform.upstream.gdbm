@@ -1,99 +1,56 @@
-GNU dbm README
-Copyright (C) 2011 Free Software Foundation, Inc.
-See the end of file for copying conditions.
-
-* Introduction
-
-This file contains brief information about configuring, testing
-and using GNU dbm.  It is *not* intended as a replacement
-for the documentation, instead it is provided as a brief reference
-only. The complete documentation is available in doc/ subdirectory.
-To read the manpage without installing the package use `man
-doc/gdbm.3'.  To read texinfo documentation without installing the
-package, run `info -f doc/gdbm.info'.  After the package is installed
-the documentation can be accessed by running `man gdbm' and
-`info gdbm'.
-
-* Overview
-
 GNU dbm is a set of database routines that use extendible hashing and
-works similar to the standard UNIX dbm routines.  The library provides
-also an optional compatibility layer for UNIX-like dbm and ndbm calls.
+works similar to the standard UNIX dbm routines.
 
-* Configuration
+This is release 1.8.3 of GNU dbm.
 
-   a)  configure [PARAMETERS]
+To compile gdbm:
+
+   a)  configure <config parameters like -prefix ... see INSTALL>
    b)  make 
 
-For a list of generic PARAMETERS, see the file INCLUDE.  The gdbm-specific
-parameters are:
+To compile the optional test and conversion programs:
 
-** --enable-memory-mapped-io
+   a)  make progs
 
-Enable the use of mmap(2) for I/O optimizations.  This is the default,
-if mmap is available.  To disable mmap, use --disable-memory-mapped-io.
+To install the basic package:
 
-** --enable-libgdbm-compat
+   a)  make install
 
-Build and install libgdbm_compat, a compatibility layer which provides
-UNIX-like dbm and ndbm interfaces.
+To install the optional dbm and ndbm API compatibility library and headers:
 
-** --enable-gdbm-export
+   a)  make install-compat
 
-Build and install gdbmexport with the specified gdbm 1.8 library.
+Please report bugs to
+	bug-gnu-utils@gnu.org
 
-** --with-gdbm183-library=LIB
+------------------------------------------
 
-Build gdbmexport with specified (static) library.  LIB must be
-a loader argument valid for the use with cc(1), e.g.: -lgdbm-1.8.
+The files are:
 
-** --gdbm183-libdir=DIR
+INSTALL		- Installation tips and information.
+NEWS		- New and changed things.
+COPYING		- Copying information.
+README		- This file.
 
-Build gdbmexport with the gdbm library from the specified directory.
+bucket.c, extern.h, falloc.c, findkey.c, gdbm.proto, gdbmclose.c,
+gdbmconst.h gdbmdefs.h, gdbmdelete.c, gdbmerrno.h, gdbmfdesc.c, gdbmfetch.c,
+gdbmsync.c, gdbmopen.c, gdbmreorg.c, gdbmseq.c, gdbmstore.c, global.c, gdbm.h,
+hash.c systems.h, update.c, version.c - Source for GNU dbm library.
 
-** --gdbm183-includedir=DIR
+dbm.h dbminit.c, delete.c, fetch.c, seq.c, store.c - Source for the
+DBM interface.
 
-Build gdbmexport with gdbm.h from the specified directory.
+dbmclose.c, dbmdelete.c, dbmdirfno.c, dbmfetch.c, dbmopen.c, dbmpagfno.c
+dbmseq.c, dbmstore.c, ndbm.h - Source for the NDBM interface.
 
-* Installation 
+Makefile 	- Makefile, will make gdbm.a  (BSD and SYSV)
+testgdbm.c	- A simple test program.
+testdbm.c	- A simple test program.
+testndbm.c	- A simple test program.
+conv2gdbm.c	- A dbm database conversion program.
 
-  make install
+gdbm.3, gdbm.texinfo - Documentation for gdbm.
 
-* Bug reporting
-
-Please report bugs to <bug-gdbm@gnu.org>
-
-* Documentation, updates etc.
-
-For the latest updates, visit <http://www.gnu.org/software/gdbm>,
-
-In particular, a copy of GDBM documentation in various formats is
-available online at <http://www.gnu.org/software/gdbm/manual>.
-
-Latest versions of GDBM can be downloaded from anonymous
-ftp://ftp.gnu.org/gnu/gdbm.
-
-To track the development, visit 
-<http://puszcza.gnu.org.ua/projects/gdbm>.
-
-
-* Copyright information:
-
-Copyright (C) 2011 Free Software Foundation, Inc.
-
-   Permission is granted to anyone to make or distribute verbatim copies
-   of this document as received, in any medium, provided that the
-   copyright notice and this permission notice are preserved,
-   thus giving the recipient permission to redistribute in turn.
-
-   Permission is granted to distribute modified versions
-   of this document, or of portions of it,
-   under the above conditions, provided also that they
-   carry prominent notices stating who last changed them.
-
-
-Local Variables:
-mode: outline
-paragraph-separate: "[ 	]*$"
-version-control: never
-End:
+The author of GNU dbm may be reached via e-mail to <phil@cs.wwu.edu>,
+and the current maintainer may be reached at <downsj@downsj.com>.
+E-mail may be sent to either, or both, of these people.

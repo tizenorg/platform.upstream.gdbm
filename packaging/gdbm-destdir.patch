@@ -1,0 +1,43 @@
+--- gdbm-1.8.3/Makefile.in.org	2009-02-08 02:26:13.000000000 -0800
++++ gdbm-1.8.3/Makefile.in	2009-02-08 02:26:36.000000000 -0800
+@@ -127,27 +127,27 @@ all: libgdbm.la libgdbm_compat.la
+ progs: $(PROGS)
+ 
+ install: libgdbm.la gdbm.h gdbm.info
+-	$(srcdir)/mkinstalldirs $(INSTALL_ROOT)$(libdir) \
+-		$(INSTALL_ROOT)$(includedir) $(INSTALL_ROOT)$(man3dir) \
+-		$(INSTALL_ROOT)$(infodir)
++	$(srcdir)/mkinstalldirs $(DESTDIR)$(libdir) \
++		$(DESTDIR)$(includedir) $(DESTDIR)$(man3dir) \
++		$(DESTDIR)$(infodir)
+ 	$(LIBTOOL) --mode=install $(INSTALL) -c libgdbm.la \
+-		$(INSTALL_ROOT)$(libdir)/libgdbm.la
++		$(DESTDIR)$(libdir)/libgdbm.la
+ 	$(INSTALL_DATA) gdbm.h \
+-		$(INSTALL_ROOT)$(includedir)/gdbm.h
++		$(DESTDIR)$(includedir)/gdbm.h
+ 	$(INSTALL_DATA) $(srcdir)/gdbm.3 \
+-		$(INSTALL_ROOT)$(man3dir)/gdbm.3
++		$(DESTDIR)$(man3dir)/gdbm.3
+ 	$(INSTALL_DATA) $(srcdir)/gdbm.info \
+-		$(INSTALL_ROOT)$(infodir)/gdbm.info
++		$(DESTDIR)$(infodir)/gdbm.info
+ 
+ install-compat:
+-	$(srcdir)/mkinstalldirs $(INSTALL_ROOT)$(libdir) \
+-		$(INSTALL_ROOT)$(includedir)
++	$(srcdir)/mkinstalldirs $(DESTDIR)$(libdir) \
++		$(DESTDIR)$(includedir)
+ 	$(LIBTOOL) --mode=install $(INSTALL) -c libgdbm_compat.la \
+-		$(INSTALL_ROOT)$(libdir)/libgdbm_compat.la
++		$(DESTDIR)$(libdir)/libgdbm_compat.la
+ 	$(INSTALL_DATA) $(srcdir)/dbm.h \
+-		$(INSTALL_ROOT)$(includedir)/dbm.h
++		$(DESTDIR)$(includedir)/dbm.h
+ 	$(INSTALL_DATA) $(srcdir)/ndbm.h \
+-		$(INSTALL_ROOT)$(includedir)/ndbm.h
++		$(DESTDIR)$(includedir)/ndbm.h
+ 
+ #libgdbm.a: $(OBJS) gdbm.h
+ #	rm -f libgdbm.a
+

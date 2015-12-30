@@ -1,0 +1,11 @@
+--- a/gdbmseq.c
++++ b/gdbmseq.c
+@@ -41,6 +41,8 @@
+    at ELEM_LOC of the current bucket and using RETURN_VAL as the place to
+    put the data that is found. */
+ 
++static void get_next_key __P((gdbm_file_info *, int, datum *));
++
+ static void
+ get_next_key (dbf, elem_loc, return_val)
+      gdbm_file_info *dbf;

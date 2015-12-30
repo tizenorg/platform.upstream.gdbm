@@ -1,0 +1,114 @@
+--- a/dbm.h
++++ b/dbm.h
+@@ -1,7 +1,7 @@
+ /* dbm.h  -  The include file for dbm users.  */
+ 
+ /*  This file is part of GDBM, the GNU data base manager, by Philip A. Nelson.
+-    Copyright (C) 1990, 1991, 1993  Free Software Foundation, Inc.
++    Copyright (C) 1990, 1991, 1993, 2008  Free Software Foundation, Inc.
+ 
+     GDBM is free software; you can redistribute it and/or modify
+     it under the terms of the GNU General Public License as published by
+@@ -32,21 +32,31 @@
+ 	int   dsize;
+       } datum;
+ 
++/* The file information header. This is good enough for most applications. */
++typedef struct {int dummy[10];} DBM;
+ 
+-/* These are the routines in dbm. */
+ 
+-extern int	dbminit ();
++/* Determine if the C(++) compiler requires complete function prototype  */
++#ifndef __P
++#if defined(__STDC__) || defined(__cplusplus) || defined(c_plusplus)
++#define __P(x) x
++#else
++#define __P(x) ()
++#endif
++#endif
++
++/* These are the routines in dbm. */
+ 
+-extern datum	fetch ();
++extern int	dbminit __P((char *file));
+ 
+-extern int	store ();
++extern datum	fetch __P((datum key));
+ 
+-extern int	delete ();
++extern int	store __P((datum key, datum content));
+ 
+-extern int	delete ();
++extern int	delete __P((datum key));
+ 
+-extern datum	firstkey ();
++extern datum	firstkey __P((void));
+ 
+-extern datum	nextkey ();
++extern datum	nextkey __P((datum key));
+ 
+-extern int	dbmclose ();
++extern int	dbmclose __P((DBM *));
+--- a/ndbm.h
++++ b/ndbm.h
+@@ -1,7 +1,7 @@
+ /* ndbm.h  -  The include file for ndbm users.  */
+ 
+ /*  This file is part of GDBM, the GNU data base manager, by Philip A. Nelson.
+-    Copyright (C) 1990, 1991, 1993  Free Software Foundation, Inc.
++    Copyright (C) 1990, 1991, 1993, 2008  Free Software Foundation, Inc.
+ 
+     GDBM is free software; you can redistribute it and/or modify
+     it under the terms of the GNU General Public License as published by
+@@ -41,31 +41,39 @@
+ /* The file information header. This is good enough for most applications. */
+ typedef struct {int dummy[10];} DBM;
+ 
++/* Determine if the C(++) compiler requires complete function prototype  */
++#ifndef __P
++#if defined(__STDC__) || defined(__cplusplus) || defined(c_plusplus)
++#define __P(x) x
++#else
++#define __P(x) ()
++#endif
++#endif
+ 
+ /* These are the routines (with some macros defining them!) */
+ 
+-extern DBM 	*dbm_open ();
++extern DBM 	*dbm_open __P((char *file, int flags, int mode));
+ 
+-extern void	 dbm_close ();
++extern void	 dbm_close __P((DBM *dbf));
+ 
+-extern datum	 dbm_fetch ();
++extern datum	 dbm_fetch __P((DBM *dbf, datum key));
+ 
+-extern int	 dbm_store ();
++extern int	 dbm_store __P((DBM *dbf, datum key, datum content, int flags));
+ 
+-extern int	 dbm_delete ();
++extern int	 dbm_delete __P((DBM *dbf, datum key));
+ 
+-extern int	 dbm_delete ();
++extern int	 dbm_delete __P((DBM *dbf, datum key));
+ 
+-extern datum	 dbm_firstkey ();
++extern datum	 dbm_firstkey __P((DBM *));
+ 
+-extern datum	 dbm_nextkey ();
++extern datum	 dbm_nextkey __P((DBM *));
+ 
+ #define		 dbm_error(dbf)  (0)
+ 
+ #define		 dbm_clearerr(dbf)
+ 
+-extern int	 dbm_dirfno ();
++extern int	 dbm_dirfno __P((DBM *dbf));
+ 
+-extern int	 dbm_pagfno ();
++extern int	 dbm_pagfno __P((DBM *dbf));
+ 
+-extern int	 dbm_rdonly ();
++extern int	 dbm_rdonly __P((DBM *dbf));

@@ -1,0 +1,138 @@
+--- a/testdbm.c
++++ b/testdbm.c
+@@ -31,6 +31,9 @@
+ #include "autoconf.h"
+ 
+ #include <stdio.h>
++#if HAVE_STRING_H
++#include <string.h>
++#endif
+ #include <sys/types.h>
+ #if HAVE_STDLIB_H
+ #include <stdlib.h>
+@@ -39,19 +42,15 @@
+ #include <sys/file.h>
+ #endif
+ #include <sys/stat.h>
++#ifdef GNU
++#include "dbm.h"
++#else
++#include <dbm.h>
++#endif
+ 
+ #define TRUE  1
+ #define FALSE 0
+ 
+-typedef struct {
+-  char *dptr;
+-  int   dsize;
+-} datum;
+-
+-extern datum fetch ();
+-extern datum firstkey ();
+-extern datum nextkey ();
+-
+ /* The test program allows one to call all the routines plus the hash function.
+    The commands are single letter commands.  The user is prompted for all other
+    information.  The commands are q (quit), f (fetch), s (store), d (delete),
+@@ -123,7 +122,7 @@
+ 
+ 	case 'f':
+ 	  printf ("key -> ");
+-	  gets (key_line);
++	  fgets (key_line, sizeof(key_line), stdin);
+ 	  key_data.dptr = key_line;
+ 	  key_data.dsize = strlen (key_line)+1;
+ 	  return_data = fetch (key_data);
+@@ -135,11 +134,11 @@
+ 
+ 	case 's':
+ 	  printf ("key -> ");
+-	  gets (key_line);
++	  fgets (key_line, sizeof(key_line), stdin);
+ 	  key_data.dptr = key_line;
+ 	  key_data.dsize = strlen (key_line)+1;
+ 	  printf ("data -> ");
+-	  gets (data_line);
++	  fgets (data_line, sizeof(data_line), stdin);
+ 	  data_data.dsize = strlen (data_line)+1;
+ 	  if (store (key_data, data_data) != 0)
+ 	    printf ("Item not inserted. \n");
+@@ -148,7 +147,7 @@
+ 
+ 	case 'd':
+ 	  printf ("key -> ");
+-	  gets (key_line);
++	  fgets (key_line, sizeof(key_line), stdin);
+ 	  key_data.dptr = key_line;
+ 	  key_data.dsize = strlen (key_line)+1;
+ 	  if (delete (key_data) != 0)
+--- a/testgdbm.c
++++ b/testgdbm.c
+@@ -37,10 +37,22 @@
+ 
+ #include "getopt.h"
+ 
++#if defined(__GNUC__) && __GNUC__ >=3
++#  define NORETURN __attribute__((__noreturn__))
++#else
++#  define NORETURN
++#endif
++
+ extern const char * gdbm_version;
+ 
+ extern const char *gdbm_strerror __P((gdbm_error));
+ 
++void print_bucket __P((hash_bucket *bucket, char *mesg));
++void _gdbm_print_avail_list __P((gdbm_file_info *dbf));
++void _gdbm_print_bucket_cache __P((gdbm_file_info *dbf));
++void usage __P((char *)) NORETURN;
++
++
+ gdbm_file_info *gdbm_file;
+ 
+ /* Debug procedure to print the contents of the current hash bucket. */
+--- a/testndbm.c
++++ b/testndbm.c
+@@ -42,6 +42,9 @@
+ #if HAVE_FCNTL_H
+ #include <fcntl.h>
+ #endif
++#if HAVE_STRING_H
++#include <string.h>
++#endif
+ #ifdef GNU
+ #include "ndbm.h"
+ #else
+@@ -120,7 +123,7 @@
+ 
+ 	case 'f':
+ 	  printf ("key -> ");
+-	  gets (key_line);
++	  fgets (key_line, sizeof(key_line), stdin);
+ 	  key_data.dptr = key_line;
+ 	  key_data.dsize = strlen (key_line)+1;
+ 	  return_data = dbm_fetch (dbm_file, key_data);
+@@ -132,11 +135,11 @@
+ 
+ 	case 's':
+ 	  printf ("key -> ");
+-	  gets (key_line);
++	  fgets (key_line, sizeof(key_line), stdin);
+ 	  key_data.dptr = key_line;
+ 	  key_data.dsize = strlen (key_line)+1;
+ 	  printf ("data -> ");
+-	  gets (data_line);
++	  fgets (data_line, sizeof(data_line), stdin);
+ 	  data_data.dsize = strlen (data_line)+1;
+ 	  if (dbm_store (dbm_file, key_data, data_data, DBM_REPLACE) != 0)
+ 	    printf ("Item not inserted. \n");
+@@ -145,7 +148,7 @@
+ 
+ 	case 'd':
+ 	  printf ("key -> ");
+-	  gets (key_line);
++	  fgets (key_line, sizeof(key_line), stdin);
+ 	  key_data.dptr = key_line;
+ 	  key_data.dsize = strlen (key_line)+1;
+ 	  if (dbm_delete (dbm_file, key_data) != 0)
